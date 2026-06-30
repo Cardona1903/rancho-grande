@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Rancho Grande</title>
+  <meta name="theme-color" content="#2E7D32" />
+  <meta name="description" content="Administración de habitaciones y arriendos - Rancho Grande" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+</head>
+<body>
+
+  <div id="banner-offline" style="display:none">Sin conexión — los cambios se guardarán cuando vuelva la señal</div>
+
+  <!-- PANTALLA: LOGIN -->
+  <div class="screen active" id="screen-login">
+    <div class="login-container">
+      <div class="login-logo">🌾</div>
+      <h1 class="login-titulo">Rancho Grande</h1>
+      <p class="login-subtitulo">¿Quién eres?</p>
+      <div class="login-usuarios" id="login-usuarios">
+        <!-- Las tarjetas de usuario se generan dinámicamente desde auth.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA: INICIO -->
+  <div class="screen" id="screen-inicio">
+    <div class="inicio-header">
+      <div>
+        <div class="inicio-saludo" id="inicio-saludo">¡Hola! 👋</div>
+        <div class="inicio-fecha" id="inicio-fecha"></div>
+      </div>
+      <button class="btn-cerrar-sesion" id="btn-salir-inicio">Salir</button>
+    </div>
+
+    <div class="resumen-grid" id="inicio-resumen-grid">
+      <div class="resumen-card" id="card-habitaciones">
+        <span class="resumen-card-icon">🏠</span>
+        <span class="resumen-card-valor" id="card-hab-total">-</span>
+        <span class="resumen-card-label">Habitaciones</span>
+        <span class="resumen-card-sub" id="card-hab-sub"></span>
+      </div>
+      <div class="resumen-card" id="card-arrendatarios">
+        <span class="resumen-card-icon">👥</span>
+        <span class="resumen-card-valor" id="card-arr-total">-</span>
+        <span class="resumen-card-label">Arrendatarios</span>
+        <span class="resumen-card-sub" id="card-arr-sub"></span>
+      </div>
+      <div class="resumen-card" id="card-ingresos">
+        <span class="resumen-card-icon">📈</span>
+        <span class="resumen-card-valor ingreso" id="card-ingresos-val">$0</span>
+        <span class="resumen-card-label">Ingresos</span>
+        <span class="resumen-card-sub">Este mes</span>
+      </div>
+      <div class="resumen-card" id="card-gastos">
+        <span class="resumen-card-icon">📉</span>
+        <span class="resumen-card-valor gasto" id="card-gastos-val">$0</span>
+        <span class="resumen-card-label">Gastos</span>
+        <span class="resumen-card-sub">Este mes</span>
+      </div>
+    </div>
+
+    <div class="inicio-seccion">
+      <h3 class="inicio-seccion-titulo">⚠️ Atención urgente</h3>
+      <div id="inicio-urgentes"></div>
+    </div>
+
+    <div class="inicio-seccion">
+      <h3 class="inicio-seccion-titulo">🧹 Aseo de hoy</h3>
+      <div id="inicio-aseo-hoy"></div>
+    </div>
+
+    <div style="padding:0 16px 12px">
+      <button class="btn-primary" id="btn-exportar-excel" style="width:100%">
+        📊 Exportar Excel completo
+      </button>
+    </div>
+
+    <div style="padding:0 16px 100px">
+      <button class="btn-secondary" id="btn-ver-finanzas" style="width:100%">
+        Ver informe completo →
+      </button>
+    </div>
+  </div>
+
+  <!-- PANTALLA: HABITACIONES -->
+  <div class="screen" id="screen-habitaciones">
+    <div class="screen-header">🏠 Habitaciones</div>
+    <div id="habitaciones-lista" class="lista-contenido"></div>
+    <button class="fab-btn" id="btn-nueva-habitacion">+</button>
+  </div>
+
+  <!-- Modal: formulario nueva/editar habitación -->
+  <div class="modal-overlay" id="modal-habitacion-form" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo" id="modal-habitacion-titulo">Nueva habitación</h2>
+      <form id="form-habitacion">
+        <div class="form-group">
+          <label class="form-label" for="campo-numero">Número o nombre</label>
+          <input class="input-field" type="text" id="campo-numero" placeholder="Ej: 1, 2A, Apto 1" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-tipo">Tipo</label>
+          <select class="input-field" id="campo-tipo" required>
+            <option value="habitacion">Habitación</option>
+            <option value="apartamento">Apartamento</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="campo-tiene-bano" />
+              <span class="toggle-slider"></span>
+            </label>
+            <label class="form-label" for="campo-tiene-bano">¿Tiene baño privado?</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-precio">Precio mensual</label>
+          <input class="input-field" type="number" id="campo-precio" placeholder="Ej: 450000" min="0" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-descripcion">Descripción (opcional)</label>
+          <textarea class="input-field" id="campo-descripcion" placeholder="Detalles adicionales..." rows="3"></textarea>
+        </div>
+        <div class="modal-acciones">
+          <button type="submit" class="btn-primary" id="btn-guardar-habitacion">Guardar habitación</button>
+          <button type="button" class="btn-secondary" id="btn-cancelar-habitacion-form">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: opciones de habitación (editar/eliminar) -->
+  <div class="modal-overlay" id="modal-habitacion-opciones" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo" id="modal-habitacion-opciones-titulo">Habitación</h2>
+      <div class="modal-acciones">
+        <button class="btn-secondary" id="btn-editar-habitacion">✏️ Editar</button>
+        <button class="btn-danger" id="btn-eliminar-habitacion">🗑️ Eliminar</button>
+        <button class="btn-secondary" id="btn-cerrar-opciones-habitacion">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: confirmación eliminar -->
+  <div class="modal-overlay" id="modal-habitacion-confirmar" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo">¿Eliminar esta habitación?</h2>
+      <p>Esta acción no se puede deshacer.</p>
+      <div class="modal-acciones">
+        <button class="btn-danger" id="btn-confirmar-eliminar-habitacion">Sí, eliminar</button>
+        <button class="btn-secondary" id="btn-cancelar-eliminar-habitacion">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast de notificación -->
+  <div class="toast" id="toast" style="display:none"></div>
+
+  <!-- PANTALLA: ARRENDATARIOS -->
+  <div class="screen" id="screen-arrendatarios">
+    <div class="screen-header">👥 Arrendatarios</div>
+    <div class="filtros-bar" id="filtros-arrendatarios">
+      <button class="filtro-btn active" data-filtro="todos">Todos</button>
+      <button class="filtro-btn" data-filtro="al_dia">Al día</button>
+      <button class="filtro-btn" data-filtro="pendiente">Pendientes</button>
+      <button class="filtro-btn" data-filtro="atrasado">Atrasados</button>
+    </div>
+    <div id="arrendatarios-lista" class="lista-contenido"></div>
+    <button class="fab-btn" id="btn-nuevo-arrendatario">+</button>
+  </div>
+
+  <!-- Modal: paso 1 — datos personales del nuevo arrendatario -->
+  <div class="modal-overlay" id="modal-arrendatario-datos" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo">Nuevo arrendatario — Datos personales</h2>
+      <form id="form-arrendatario-datos">
+        <div class="form-group">
+          <label class="form-label" for="campo-datos-nombre">Nombre completo</label>
+          <input class="input-field" type="text" id="campo-datos-nombre" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-datos-cedula">Cédula</label>
+          <input class="input-field" type="text" id="campo-datos-cedula" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-datos-telefono">Teléfono</label>
+          <input class="input-field" type="text" id="campo-datos-telefono" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-datos-fecha-ingreso">Fecha de ingreso</label>
+          <input class="input-field" type="date" id="campo-datos-fecha-ingreso" required />
+        </div>
+        <div class="modal-acciones">
+          <button type="submit" class="btn-primary" id="btn-guardar-datos-arrendatario">Continuar → Asignar habitación</button>
+          <button type="button" class="btn-secondary" id="btn-cancelar-datos-arrendatario">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: paso 2 — asignar habitación y pago inicial -->
+  <div class="modal-overlay" id="modal-arrendatario-habitacion-pago" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo" id="modal-hp-titulo">Asignar habitación</h2>
+      <form id="form-habitacion-pago">
+        <div class="form-group">
+          <label class="form-label" for="campo-hp-habitacion">Habitación</label>
+          <select class="input-field" id="campo-hp-habitacion" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-hp-valor-arriendo">Valor del arriendo</label>
+          <input class="input-field" type="number" id="campo-hp-valor-arriendo" min="0" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">¿Ya pagó todo?</label>
+          <div class="radio-group" id="radio-group-pago-inicial">
+            <label class="radio-option selected" data-valor="si">
+              <input type="radio" name="pago-inicial" value="si" id="radio-pago-inicial-si" checked />
+              ✅ Sí, pagó todo
+            </label>
+            <label class="radio-option" data-valor="no">
+              <input type="radio" name="pago-inicial" value="no" id="radio-pago-inicial-no" />
+              ⏳ No, falta saldo
+            </label>
+          </div>
+        </div>
+        <div class="form-group campo-visible" id="grupo-hp-metodo-completo">
+          <label class="form-label" for="campo-hp-metodo-completo">Método de pago</label>
+          <select class="input-field" id="campo-hp-metodo-completo">
+            <option value="">Selecciona...</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+        <div class="form-group campo-oculto" id="grupo-hp-abono">
+          <label class="form-label" for="campo-hp-abono">¿Cuánto pagó como abono?</label>
+          <input class="input-field" type="number" id="campo-hp-abono" min="0" value="0" />
+        </div>
+        <div class="form-group campo-oculto" id="grupo-hp-metodo-abono">
+          <label class="form-label" for="campo-hp-metodo-abono">Método de pago del abono</label>
+          <select class="input-field" id="campo-hp-metodo-abono">
+            <option value="">Selecciona...</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+        <div class="form-group campo-oculto" id="grupo-hp-saldo-referencia">
+          <p>Saldo pendiente: <strong id="hp-saldo-texto">$0</strong></p>
+        </div>
+        <div class="form-group campo-oculto" id="grupo-hp-fecha-pago-completo">
+          <label class="form-label" for="campo-hp-fecha-pago-completo">Fecha en que pagará el resto</label>
+          <input class="input-field" type="date" id="campo-hp-fecha-pago-completo" />
+        </div>
+        <div class="modal-acciones">
+          <button type="submit" class="btn-primary" id="btn-guardar-habitacion-pago">Guardar</button>
+          <button type="button" class="btn-secondary" id="btn-cancelar-habitacion-pago">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: editar arrendatario -->
+  <div class="modal-overlay" id="modal-arrendatario-form" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo" id="modal-arrendatario-titulo">Editar arrendatario</h2>
+      <form id="form-arrendatario">
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-nombre">Nombre completo</label>
+          <input class="input-field" type="text" id="campo-arr-nombre" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-cedula">Cédula</label>
+          <input class="input-field" type="text" id="campo-arr-cedula" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-telefono">Teléfono</label>
+          <input class="input-field" type="text" id="campo-arr-telefono" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-habitacion">Habitación</label>
+          <select class="input-field" id="campo-arr-habitacion"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-fecha-ingreso">Fecha de ingreso</label>
+          <input class="input-field" type="date" id="campo-arr-fecha-ingreso" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-fecha-vencimiento">Fecha de vencimiento</label>
+          <input class="input-field" type="date" id="campo-arr-fecha-vencimiento" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-valor-arriendo">Valor del arriendo</label>
+          <input class="input-field" type="number" id="campo-arr-valor-arriendo" min="0" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-estado-pago">Estado de pago</label>
+          <select class="input-field" id="campo-arr-estado-pago">
+            <option value="al_dia">Al día</option>
+            <option value="pendiente" selected>Pendiente</option>
+            <option value="atrasado">Atrasado</option>
+          </select>
+        </div>
+        <div class="form-group campo-visible" id="grupo-arr-abono">
+          <label class="form-label" for="campo-arr-abono">Abono recibido</label>
+          <input class="input-field" type="number" id="campo-arr-abono" min="0" value="0" />
+        </div>
+        <div class="form-group campo-oculto" id="grupo-arr-fecha-pago-completo">
+          <label class="form-label" for="campo-arr-fecha-pago-completo">Fecha prometida para pagar el resto</label>
+          <input class="input-field" type="date" id="campo-arr-fecha-pago-completo" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-metodo-pago">Método de pago</label>
+          <select class="input-field" id="campo-arr-metodo-pago">
+            <option value="">Sin definir</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-arr-observaciones">Observaciones</label>
+          <textarea class="input-field" id="campo-arr-observaciones" rows="3"></textarea>
+        </div>
+        <div class="modal-acciones">
+          <button type="submit" class="btn-primary" id="btn-guardar-arrendatario">Guardar arrendatario</button>
+          <button type="button" class="btn-secondary" id="btn-cancelar-arrendatario-form">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: opciones de arrendatario -->
+  <div class="modal-overlay" id="modal-arrendatario-opciones" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo" id="modal-arrendatario-opciones-titulo">Arrendatario</h2>
+      <div class="modal-acciones">
+        <button class="btn-primary" id="btn-asignar-habitacion" style="display:none">🏠 Asignar habitación</button>
+        <button class="btn-primary" id="btn-registrar-pago" style="display:none">💰 Registrar pago</button>
+        <button class="btn-secondary" id="btn-editar-arrendatario">✏️ Editar datos</button>
+        <button class="btn-danger" id="btn-dar-baja-arrendatario">🚪 Dar de baja</button>
+        <button class="btn-secondary" id="btn-cerrar-opciones-arrendatario">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: confirmación dar de baja -->
+  <div class="modal-overlay" id="modal-arrendatario-confirmar-baja" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo">¿Dar de baja a este arrendatario?</h2>
+      <p>Se liberará su habitación y dejará de aparecer en la lista activa.</p>
+      <div class="modal-acciones">
+        <button class="btn-danger" id="btn-confirmar-baja-arrendatario">Sí, dar de baja</button>
+        <button class="btn-secondary" id="btn-cancelar-baja-arrendatario">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: registrar pago -->
+  <div class="modal-overlay" id="modal-arrendatario-pago" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo" id="modal-pago-titulo">Registrar pago</h2>
+      <div class="card" id="pago-referencia"></div>
+      <form id="form-pago">
+        <div class="radio-group" id="radio-group-pago">
+          <label class="radio-option selected" data-valor="pago_completo">
+            <input type="radio" name="tipo-pago" value="pago_completo" id="radio-pago-completo" checked />
+            💳 Pago completo
+          </label>
+          <label class="radio-option" data-valor="abono">
+            <input type="radio" name="tipo-pago" value="abono" id="radio-pago-abono" />
+            💵 Abono
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-pago-valor">Valor</label>
+          <input class="input-field" type="number" id="campo-pago-valor" min="0" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-pago-metodo">Método de pago</label>
+          <select class="input-field" id="campo-pago-metodo">
+            <option value="">Selecciona...</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-pago-fecha">Fecha</label>
+          <input class="input-field" type="date" id="campo-pago-fecha" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-pago-mes">Mes correspondiente</label>
+          <input class="input-field" type="text" id="campo-pago-mes" placeholder="2026-06" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="campo-pago-observaciones">Observaciones</label>
+          <textarea class="input-field" id="campo-pago-observaciones" rows="2"></textarea>
+        </div>
+        <div class="modal-acciones">
+          <button type="submit" class="btn-primary" id="btn-guardar-pago">Registrar pago</button>
+          <button type="button" class="btn-secondary" id="btn-cancelar-pago-form">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PANTALLA: ASEO -->
+  <div class="screen" id="screen-aseo">
+    <div class="screen-header">🧹 Aseo Baño Común</div>
+
+    <div class="semana-nav">
+      <button class="btn-semana" id="btn-semana-anterior">←</button>
+      <span id="semana-label-texto" class="semana-label"></span>
+      <button class="btn-semana" id="btn-semana-siguiente">→</button>
+    </div>
+
+    <div id="aseo-grid" class="aseo-grid-wrapper"></div>
+
+    <div class="aseo-acciones">
+      <button class="btn-secondary" id="btn-editar-turnos">✏️ Editar turnos</button>
+    </div>
+
+    <div class="aseo-sin-bano">
+      <h3 class="aseo-seccion-titulo">👥 Sin baño privado</h3>
+      <div id="lista-sin-bano"></div>
+    </div>
+  </div>
+
+  <!-- PANTALLA: FINANZAS -->
+  <div class="screen" id="screen-finanzas">
+    <div class="screen-header">💰 Finanzas</div>
+
+    <div class="finanzas-resumen" id="finanzas-resumen">
+      <div class="resumen-item">
+        <span class="resumen-label">Ingresos</span>
+        <span class="resumen-valor ingreso" id="resumen-ingresos">$0</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-label">Gastos</span>
+        <span class="resumen-valor gasto" id="resumen-gastos">$0</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-label">Balance</span>
+        <span class="resumen-valor" id="resumen-balance">$0</span>
+      </div>
+    </div>
+
+    <div class="finanzas-filtros">
+      <div class="filtros-bar" id="filtros-tipo">
+        <button class="filtro-btn active" data-tipo="todos">Todos</button>
+        <button class="filtro-btn" data-tipo="ingreso">Ingresos</button>
+        <button class="filtro-btn" data-tipo="gasto">Gastos</button>
+      </div>
+      <input type="month" id="filtro-mes" class="input-field" style="max-width:160px;padding:8px 12px">
+    </div>
+
+    <div id="finanzas-lista" class="lista-contenido"></div>
+    <button class="fab-btn" id="btn-nuevo-registro">+</button>
+  </div>
+
+  <!-- Modal: formulario nuevo/editar registro -->
+  <div class="modal-overlay" id="modal-finanza-form" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo" id="modal-finanza-titulo">Nuevo registro</h2>
+      <form id="form-finanza">
+        <!-- campos generados dinámicamente en JS -->
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: opciones de registro -->
+  <div class="modal-overlay" id="modal-finanza-opciones" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo" id="modal-finanza-opciones-titulo"></h2>
+      <div class="modal-acciones">
+        <button class="btn-secondary" id="btn-editar-finanza">✏️ Editar</button>
+        <button class="btn-danger" id="btn-eliminar-finanza">🗑️ Eliminar</button>
+        <button class="btn-secondary" id="btn-cerrar-finanza-opciones">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: confirmar eliminar registro -->
+  <div class="modal-overlay" id="modal-finanza-confirmar" style="display:none">
+    <div class="modal">
+      <p style="font-size:16px;margin-bottom:20px">¿Eliminar este registro? Esta acción no se puede deshacer.</p>
+      <div class="modal-acciones">
+        <button class="btn-danger" id="btn-confirmar-eliminar-finanza">Sí, eliminar</button>
+        <button class="btn-secondary" id="btn-cancelar-eliminar-finanza">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA: CONFIGURACION -->
+  <div class="screen" id="screen-configuracion">
+    <div class="screen-header">Configuración</div>
+    <div class="screen-content" id="configuracion-contenido">
+      <div class="card" id="configuracion-usuario"></div>
+      <button class="btn-danger" id="btn-cerrar-sesion">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+  <nav class="nav-bar" id="nav-bar" style="display:none">
+    <button class="nav-btn" data-screen="inicio">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Inicio</span>
+    </button>
+    <button class="nav-btn" data-screen="habitaciones">
+      <span class="nav-icon">🛏️</span>
+      <span class="nav-label">Habitaciones</span>
+    </button>
+    <button class="nav-btn" data-screen="arrendatarios">
+      <span class="nav-icon">👥</span>
+      <span class="nav-label">Arrendatarios</span>
+    </button>
+    <button class="nav-btn" data-screen="aseo">
+      <span class="nav-icon">🧹</span>
+      <span class="nav-label">Aseo</span>
+    </button>
+    <button class="nav-btn" data-screen="finanzas">
+      <span class="nav-icon">💰</span>
+      <span class="nav-label">Finanzas</span>
+    </button>
+  </nav>
+
+  <!-- Modal: editar turnos de aseo -->
+  <div class="modal-overlay" id="modal-aseo-editar" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo">✏️ Editar turnos</h2>
+      <p class="semana-label" id="modal-aseo-semana-label"></p>
+      <div id="aseo-form-turnos"></div>
+      <div class="modal-acciones">
+        <button class="btn-primary" id="btn-guardar-turnos">Guardar turnos</button>
+        <button class="btn-secondary" id="btn-cancelar-turnos">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "Rancho Grande",
+  "short_name": "Rancho Grande",
+  "description": "Administración de habitaciones y arriendos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F0",
+  "theme_color": "#2E7D32",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
