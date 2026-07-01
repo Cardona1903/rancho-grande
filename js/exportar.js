@@ -1,4 +1,48 @@
 import supabase from './supabase.js';
+import { mostrarToast } from './toast.js';
+
+// ── Estado del modal ───────────────────────────────────────────────────────────
+
+let mesExportar = new Date().toISOString().slice(0, 7);
+
+function actualizarLabelExportar() {
+  const [y, m] = mesExportar.split('-');
+  const label = new Date(Number(y), Number(m) - 1, 1)
+    .toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  const el = document.getElementById('exportar-mes-label');
+  if (el) el.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function abrirModalExportar() {
+  mesExportar = new Date().toISOString().slice(0, 7);
+  actualizarLabelExportar();
+  document.getElementById('modal-exportar-mes').style.display = 'flex';
+}
+
+export function initExportar() {
+  document.getElementById('btn-export-mes-anterior')?.addEventListener('click', () => {
+    const [y, m] = mesExportar.split('-').map(Number);
+    const d = new Date(y, m - 2, 1);
+    mesExportar = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    actualizarLabelExportar();
+  });
+
+  document.getElementById('btn-export-mes-siguiente')?.addEventListener('click', () => {
+    const [y, m] = mesExportar.split('-').map(Number);
+    const d = new Date(y, m, 1);
+    mesExportar = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    actualizarLabelExportar();
+  });
+
+  document.getElementById('btn-cancelar-exportar')?.addEventListener('click', () => {
+    document.getElementById('modal-exportar-mes').style.display = 'none';
+  });
+
+  document.getElementById('btn-confirmar-exportar')?.addEventListener('click', () => {
+    document.getElementById('modal-exportar-mes').style.display = 'none';
+    exportarExcel(mesExportar);
+  });
+}
 
 // ── Utilidades ────────────────────────────────────────────────────────────────
 
@@ -13,27 +57,50 @@ function habLabel(hab) {
   return `${hab.tipo === 'apartamento' ? 'Apto' : 'Hab'} ${hab.numero}`;
 }
 
-async function obtenerDatos() {
-  const [arrendatariosRes, habitacionesRes, finanzasRes, pagosRes] = await Promise.all([
+async function obtenerDatos(mesFiltro) {
+  const [anio, mes] = mesFiltro.split('-').map(Number);
+  const fechaInicio  = `${mesFiltro}-01`;
+  const mesSiguiente = mes === 12
+    ? `${anio + 1}-01-01`
+    : `${anio}-${String(mes + 1).padStart(2, '0')}-01`;
+  const ultimoDiaMes = new Date(anio, mes, 0).toISOString().split('T')[0];
+
+  const [arrRes, habRes, finRes, pagRes] = await Promise.all([
     supabase.from('arrendatarios')
       .select('*, habitaciones(numero, tipo)')
-      .eq('activo', true)
+      .lte('fecha_ingreso', ultimoDiaMes)
+      .gte('fecha_vencimiento', fechaInicio)
       .order('created_at'),
     supabase.from('habitaciones')
       .select('*')
       .order('numero'),
     supabase.from('finanzas')
       .select('*, habitaciones(numero, tipo)')
+      .gte('fecha', fechaInicio)
+      .lt('fecha', mesSiguiente)
       .order('fecha', { ascending: false }),
     supabase.from('pagos')
       .select('*, arrendatarios(nombre, habitaciones(numero, tipo))')
+      .gte('fecha_pago', fechaInicio)
+      .lt('fecha_pago', mesSiguiente)
       .order('fecha_pago', { ascending: false }),
   ]);
+
+  const arrendatarios = arrRes.data || [];
+  const habsOcupadasEnMes = new Set(
+    arrendatarios.map(a => a.habitacion_id).filter(Boolean)
+  );
+  const habitaciones = (habRes.data || []).map(h => ({
+    ...h,
+    estado: habsOcupadasEnMes.has(h.id) ? 'ocupada' : 'disponible',
+  }));
+
   return {
-    arrendatarios: arrendatariosRes.data || [],
-    habitaciones:  habitacionesRes.data  || [],
-    finanzas:      finanzasRes.data      || [],
-    pagos:         pagosRes.data         || [],
+    arrendatarios,
+    habitaciones,
+    finanzas: finRes.data || [],
+    pagos:    pagRes.data || [],
+    mes:      mesFiltro,
   };
 }
 
@@ -107,9 +174,15 @@ function buildWS(filas, anchos) {
   return ws;
 }
 
+function labelMes(mesFiltro) {
+  const [y, m] = mesFiltro.split('-').map(Number);
+  const s = new Date(y, m - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 // ── Hoja 1: Arrendatarios ─────────────────────────────────────────────────────
 
-function construirHojaArrendatarios(datos) {
+function construirHojaArrendatarios(datos, mesFiltro) {
   const NCOLS = 13;
   const fechaGen = formatearFecha(new Date().toISOString().split('T')[0]);
   const ESTADO_TEXTO = { al_dia: 'Al día', pendiente: 'Pendiente', atrasado: 'Atrasado' };
@@ -119,7 +192,7 @@ function construirHojaArrendatarios(datos) {
   const vaciosTit  = Array(NCOLS - 1).fill(null).map(() => celdaTitulo(''));
 
   const filas = [
-    [celdaEncH('RANCHO GRANDE — Arrendatarios Activos'), ...vaciosEnc],
+    [celdaEncH(`RANCHO GRANDE — Arrendatarios Activos · ${labelMes(mesFiltro)}`), ...vaciosEnc],
     [celdaTitulo(`Generado el ${fechaGen}`), ...vaciosTit],
     Array(NCOLS).fill(null).map(() => celdaNormal('')),
     [
@@ -167,12 +240,12 @@ function construirHojaArrendatarios(datos) {
 
 // ── Hoja 2: Habitaciones ──────────────────────────────────────────────────────
 
-function construirHojaHabitaciones(datos) {
+function construirHojaHabitaciones(datos, mesFiltro) {
   const NCOLS = 6;
   const vaciosEnc = Array(NCOLS - 1).fill(null).map(() => celdaEncH(''));
 
   const filas = [
-    [celdaEncH('RANCHO GRANDE — Habitaciones y Apartamentos'), ...vaciosEnc],
+    [celdaEncH(`RANCHO GRANDE — Habitaciones y Apartamentos · ${labelMes(mesFiltro)}`), ...vaciosEnc],
     [
       celdaSubH('N°'), celdaSubH('Tipo'), celdaSubH('Baño'),
       celdaSubH('Precio ($)'), celdaSubH('Estado'), celdaSubH('Descripción'),
@@ -204,12 +277,12 @@ function construirHojaHabitaciones(datos) {
 
 // ── Hoja 3: Ingresos y Gastos ─────────────────────────────────────────────────
 
-function construirHojaFinanzas(datos) {
+function construirHojaFinanzas(datos, mesFiltro) {
   const NCOLS = 9;
   const vaciosEnc = Array(NCOLS - 1).fill(null).map(() => celdaEncH(''));
 
   const filas = [
-    [celdaEncH('RANCHO GRANDE — Ingresos y Gastos'), ...vaciosEnc],
+    [celdaEncH(`RANCHO GRANDE — Ingresos y Gastos · ${labelMes(mesFiltro)}`), ...vaciosEnc],
     [
       celdaSubH('Fecha'),    celdaSubH('Tipo'),          celdaSubH('Concepto'),
       celdaSubH('Categoría'), celdaSubH('Valor ($)'),    celdaSubH('Habitación'),
@@ -271,12 +344,12 @@ function construirHojaFinanzas(datos) {
 
 // ── Hoja 4: Historial de Pagos ────────────────────────────────────────────────
 
-function construirHojaPagos(datos) {
+function construirHojaPagos(datos, mesFiltro) {
   const NCOLS = 9;
   const vaciosEnc = Array(NCOLS - 1).fill(null).map(() => celdaEncH(''));
 
   const filas = [
-    [celdaEncH('RANCHO GRANDE — Historial de Pagos'), ...vaciosEnc],
+    [celdaEncH(`RANCHO GRANDE — Historial de Pagos · ${labelMes(mesFiltro)}`), ...vaciosEnc],
     [
       celdaSubH('Fecha'),        celdaSubH('Arrendatario'), celdaSubH('Habitación'),
       celdaSubH('Tipo Pago'),    celdaSubH('Valor ($)'),    celdaSubH('Mes'),
@@ -316,22 +389,22 @@ function construirHojaPagos(datos) {
 
 // ── Exportar ──────────────────────────────────────────────────────────────────
 
-export async function exportarExcel(mostrarToast) {
+export async function exportarExcel(mes = null) {
+  const mesFiltro = mes || new Date().toISOString().slice(0, 7);
   try {
     mostrarToast('Generando Excel... ⏳');
-    const datos = await obtenerDatos();
+    const datos = await obtenerDatos(mesFiltro);
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, construirHojaArrendatarios(datos.arrendatarios), 'Arrendatarios');
-    XLSX.utils.book_append_sheet(wb, construirHojaHabitaciones(datos.habitaciones),   'Habitaciones');
-    XLSX.utils.book_append_sheet(wb, construirHojaFinanzas(datos.finanzas),            'Ingresos y Gastos');
-    XLSX.utils.book_append_sheet(wb, construirHojaPagos(datos.pagos),                  'Historial de Pagos');
+    XLSX.utils.book_append_sheet(wb, construirHojaArrendatarios(datos.arrendatarios, mesFiltro), 'Arrendatarios');
+    XLSX.utils.book_append_sheet(wb, construirHojaHabitaciones(datos.habitaciones,   mesFiltro), 'Habitaciones');
+    XLSX.utils.book_append_sheet(wb, construirHojaFinanzas(datos.finanzas,           mesFiltro), 'Ingresos y Gastos');
+    XLSX.utils.book_append_sheet(wb, construirHojaPagos(datos.pagos,                 mesFiltro), 'Historial de Pagos');
 
-    const fecha = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `RanchoGrande_Informe_${fecha}.xlsx`);
-    mostrarToast('✅ Excel descargado correctamente');
+    XLSX.writeFile(wb, `RanchoGrande_${mesFiltro}.xlsx`);
+    mostrarToast('✅ Excel descargado correctamente', 'success');
   } catch (err) {
     console.error('Error al exportar:', err);
-    mostrarToast('❌ Error al generar el Excel');
+    mostrarToast('❌ Error al generar el Excel', 'error');
   }
 }

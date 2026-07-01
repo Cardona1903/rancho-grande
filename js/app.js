@@ -7,7 +7,7 @@ import { initArrendatarios, recargarArrendatarios } from './arrendatarios.js';
 import { initAseo, recargarAseo } from './aseo.js';
 import { initFinanzas, recargarFinanzas } from './finanzas.js';
 import { initInicio } from './inicio.js';
-import { exportarExcel } from './exportar.js';
+import { abrirModalExportar, initExportar } from './exportar.js';
 import { mostrarToast } from './toast.js';
 export { mostrarToast };
 
@@ -177,7 +177,7 @@ function inicializarConfiguracion() {
       mostrarScreen('finanzas');
     }
     if (e.target.id === 'btn-exportar-excel') {
-      exportarExcel(mostrarToastGlobal);
+      abrirModalExportar();
     }
   });
 }
@@ -202,6 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initHabitaciones();
   initArrendatarios();
+  initExportar();
   initAseo();
   initFinanzas();
 
