@@ -74,7 +74,9 @@ export async function solicitarPermisoNotificaciones() {
 }
 
 export function mostrarNotificacionLocal(titulo, cuerpo) {
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
-  new Notification(titulo, { body: cuerpo, icon: 'icons/icon-192.png' });
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready
+    .then(reg => reg.showNotification(titulo, { body: cuerpo, icon: 'icons/icon-192.png' }))
+    .catch(() => {});
 }
