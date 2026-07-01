@@ -1,11 +1,11 @@
 import supabase from './supabase.js';
 import { mostrarNotificacionLocal } from './notificaciones.js';
+import { mostrarToast } from './toast.js';
 
 console.log('habitaciones.js cargado');
 
 let habitacionEditandoId = null;
 let habitacionSeleccionada = null;
-let toastTimeoutId = null;
 
 export function initHabitaciones() {
   console.log('initHabitaciones ejecutado');
@@ -69,6 +69,31 @@ async function cargarHabitaciones() {
   }
 }
 
+function crearCardHabitacion(habitacion) {
+  const card = document.createElement('div');
+  card.className = 'card habitacion-card';
+
+  const tipoTexto  = habitacion.tipo === 'apartamento' ? 'Apartamento' : 'Habitación';
+  const banoTexto  = habitacion.tiene_bano ? '🚿 Baño privado' : '🚻 Baño compartido';
+  const estadoBadge = habitacion.estado === 'ocupada'
+    ? '<span class="badge badge-warning">Ocupada</span>'
+    : '<span class="badge badge-success">Disponible</span>';
+
+  card.innerHTML = `
+    <div class="habitacion-numero">${habitacion.numero}</div>
+    <div class="habitacion-info">
+      <span class="badge badge-success">${tipoTexto}</span>
+      ${estadoBadge}
+    </div>
+    <div class="habitacion-precio">${formatearPrecio(habitacion.precio)} / mes</div>
+    <div class="habitacion-info">${banoTexto}</div>
+    ${habitacion.descripcion ? `<div>${habitacion.descripcion}</div>` : ''}
+  `;
+
+  card.addEventListener('click', () => abrirOpciones(habitacion));
+  return card;
+}
+
 function renderHabitaciones(lista) {
   const contenedor = document.getElementById('habitaciones-lista');
   contenedor.innerHTML = '';
@@ -78,29 +103,31 @@ function renderHabitaciones(lista) {
     return;
   }
 
-  lista.forEach((habitacion) => {
-    const card = document.createElement('div');
-    card.className = 'card habitacion-card';
+  const disponibles = lista.filter(h => h.estado === 'disponible');
+  const ocupadas    = lista.filter(h => h.estado === 'ocupada');
 
-    const tipoTexto = habitacion.tipo === 'apartamento' ? 'Apartamento' : 'Habitación';
-    const banoTexto = habitacion.tiene_bano ? '🚿 Baño privado' : '🚻 Baño compartido';
-    const estadoBadge = habitacion.estado === 'ocupada'
-      ? '<span class="badge badge-warning">Ocupada</span>'
-      : '<span class="badge badge-success">Disponible</span>';
-
-    card.innerHTML = `
-      <div class="habitacion-numero">${habitacion.numero}</div>
-      <div class="habitacion-info">
-        <span class="badge badge-success">${tipoTexto}</span>
-        ${estadoBadge}
+  [
+    { titulo: 'Disponibles', items: disponibles, gridId: 'grid-disponibles', tituloClass: '' },
+    { titulo: 'Ocupadas',    items: ocupadas,    gridId: 'grid-ocupadas',    tituloClass: ' ocupadas' },
+  ].forEach(({ titulo, items, gridId, tituloClass }) => {
+    const seccion = document.createElement('div');
+    seccion.className = 'hab-seccion';
+    seccion.innerHTML = `
+      <div class="hab-seccion-header">
+        <span class="hab-seccion-titulo${tituloClass}">${titulo}</span>
+        <span class="hab-seccion-count">(${items.length})</span>
       </div>
-      <div class="habitacion-precio">${formatearPrecio(habitacion.precio)} / mes</div>
-      <div class="habitacion-info">${banoTexto}</div>
-      ${habitacion.descripcion ? `<div>${habitacion.descripcion}</div>` : ''}
+      <div class="hab-seccion-grid" id="${gridId}"></div>
     `;
 
-    card.addEventListener('click', () => abrirOpciones(habitacion));
-    contenedor.appendChild(card);
+    const grid = seccion.querySelector(`#${gridId}`);
+    if (items.length === 0) {
+      grid.innerHTML = `<p class="hab-seccion-vacio">No hay habitaciones ${titulo.toLowerCase()}</p>`;
+    } else {
+      items.forEach(h => grid.appendChild(crearCardHabitacion(h)));
+    }
+
+    contenedor.appendChild(seccion);
   });
 }
 
@@ -208,20 +235,6 @@ function cerrarModales() {
   });
   habitacionEditandoId = null;
   habitacionSeleccionada = null;
-}
-
-function mostrarToast(mensaje, esError = false) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-
-  toast.textContent = mensaje;
-  toast.classList.toggle('toast-error', esError);
-  toast.style.display = 'block';
-
-  if (toastTimeoutId) clearTimeout(toastTimeoutId);
-  toastTimeoutId = setTimeout(() => {
-    toast.style.display = 'none';
-  }, 2500);
 }
 
 export { cargarHabitaciones as recargarHabitaciones };

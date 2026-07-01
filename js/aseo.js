@@ -1,21 +1,11 @@
 import supabase from './supabase.js';
+import { mostrarToast } from './toast.js';
 
 const DIAS_SEMANA = ['lunes','martes','miercoles','jueves','viernes','sabado'];
 const DIAS_LABEL  = ['Lun','Mar','Mié','Jue','Vie','Sáb'];
 
 let semanaActual = '';
-let toastTimeoutId = null;
 let arrendatariosSinBano = [];
-
-function mostrarToast(mensaje, esError = false) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = mensaje;
-  toast.classList.toggle('toast-error', esError);
-  toast.style.display = 'block';
-  if (toastTimeoutId) clearTimeout(toastTimeoutId);
-  toastTimeoutId = setTimeout(() => { toast.style.display = 'none'; }, 2500);
-}
 
 function getLunesActual() {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -54,27 +44,69 @@ function actualizarLabelSemana() {
 
 async function cargarArrendatariosSinBano() {
   try {
-    const { data, error } = await supabase
-      .from('arrendatarios')
-      .select('id, nombre, habitaciones!inner(numero, tipo, tiene_bano)')
-      .eq('activo', true)
-      .eq('habitaciones.tiene_bano', false);
-    if (error) throw error;
+    const [arrsResult, turnosResult] = await Promise.all([
+      supabase
+        .from('arrendatarios')
+        .select('id, nombre, habitaciones!inner(numero, tipo, tiene_bano)')
+        .eq('activo', true)
+        .eq('habitaciones.tiene_bano', false),
+      supabase
+        .from('aseo_turnos')
+        .select('arrendatario_id, completado')
+        .eq('semana_inicio', semanaActual),
+    ]);
+
+    if (arrsResult.error) throw arrsResult.error;
+
+    const data             = arrsResult.data   || [];
+    const turnosEstaSemana = turnosResult.data  || [];
 
     const lista = document.getElementById('lista-sin-bano');
     if (!lista) return [];
-    if (!data || data.length === 0) {
+    if (data.length === 0) {
       lista.innerHTML = '<p style="color:var(--text-secondary);font-size:14px">No hay arrendatarios con baño compartido.</p>';
       return [];
     }
+
     lista.innerHTML = data.map(a => {
-      const hab = a.habitaciones;
-      const tipoLabel = hab.tipo === 'apartamento' ? 'Apto' : 'Hab';
-      return `<div class="aseo-persona-item">
-        <span>${a.nombre}</span>
-        <span style="color:var(--text-secondary);font-size:13px">${tipoLabel}. ${hab.numero}</span>
+      const hab            = a.habitaciones;
+      const tipoLabel      = hab.tipo === 'apartamento' ? 'Apto' : 'Habitación';
+      const misTurnos      = turnosEstaSemana.filter(t => t.arrendatario_id === a.id);
+      const totalAsignados = misTurnos.length;
+      const hechos         = misTurnos.filter(t => t.completado).length;
+      const sinHacer       = totalAsignados - hechos;
+
+      let badgeClase, badgeTexto;
+      if (totalAsignados === 0) {
+        badgeClase = 'neutro';
+        badgeTexto = 'Sin turno esta semana';
+      } else if (hechos === totalAsignados) {
+        badgeClase = 'ok';
+        badgeTexto = '✅ Semana completa';
+      } else if (hechos > 0) {
+        badgeClase = 'pendiente';
+        badgeTexto = `⚠️ ${sinHacer} pendiente(s)`;
+      } else {
+        badgeClase = 'mora';
+        badgeTexto = '❌ Ninguno hecho';
+      }
+
+      const contadorHtml = totalAsignados > 0
+        ? `<span class="aseo-arr-contador">${hechos}/${totalAsignados} aseos hechos</span>`
+        : '';
+
+      return `<div class="aseo-arrendatario-card">
+        <div class="aseo-arr-info">
+          <div class="aseo-arr-nombre">${a.nombre}</div>
+          <div class="aseo-arr-hab">🏠 ${tipoLabel} ${hab.numero}</div>
+        </div>
+        <div class="aseo-arr-stats">
+          <span class="aseo-arr-badge aseo-arr-badge--${badgeClase}">${badgeTexto}</span>
+          ${contadorHtml}
+        </div>
       </div>`;
     }).join('');
+
     return data;
   } catch (err) {
     console.error('Error cargando arrendatarios sin baño:', err);

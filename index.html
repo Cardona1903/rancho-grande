@@ -64,7 +64,7 @@
     </div>
 
     <div class="inicio-seccion">
-      <h3 class="inicio-seccion-titulo">⚠️ Atención urgente</h3>
+      <h3 class="inicio-seccion-titulo">💸 En mora</h3>
       <div id="inicio-urgentes"></div>
     </div>
 
@@ -88,7 +88,7 @@
 
   <!-- PANTALLA: HABITACIONES -->
   <div class="screen" id="screen-habitaciones">
-    <div class="screen-header">🏠 Habitaciones</div>
+    <div class="screen-header">🏘️ Habitaciones y Apartamentos</div>
     <div id="habitaciones-lista" class="lista-contenido"></div>
     <button class="fab-btn" id="btn-nueva-habitacion">+</button>
   </div>
@@ -159,7 +159,7 @@
   </div>
 
   <!-- Toast de notificación -->
-  <div class="toast" id="toast" style="display:none"></div>
+  <div id="toast-container" aria-live="polite"></div>
 
   <!-- PANTALLA: ARRENDATARIOS -->
   <div class="screen" id="screen-arrendatarios">
@@ -350,11 +350,11 @@
   <!-- Modal: confirmación dar de baja -->
   <div class="modal-overlay" id="modal-arrendatario-confirmar-baja" style="display:none">
     <div class="modal">
-      <h2 class="modal-titulo">¿Dar de baja a este arrendatario?</h2>
-      <p>Se liberará su habitación y dejará de aparecer en la lista activa.</p>
+      <h2 class="modal-titulo" id="baja-modal-titulo">¿Dar de baja a este arrendatario?</h2>
+      <p id="baja-modal-texto">Esto marcará al arrendatario como inactivo y dejará de aparecer en la lista activa.</p>
       <div class="modal-acciones">
-        <button class="btn-danger" id="btn-confirmar-baja-arrendatario">Sí, dar de baja</button>
-        <button class="btn-secondary" id="btn-cancelar-baja-arrendatario">No</button>
+        <button class="btn-danger" id="btn-confirmar-baja-arrendatario">Confirmar baja</button>
+        <button class="btn-secondary" id="btn-cancelar-baja-arrendatario">Cancelar</button>
       </div>
     </div>
   </div>
@@ -417,15 +417,17 @@
       <button class="btn-semana" id="btn-semana-siguiente">→</button>
     </div>
 
-    <div id="aseo-grid" class="aseo-grid-wrapper"></div>
+    <div class="aseo-contenido">
+      <div id="aseo-grid" class="aseo-grid-wrapper"></div>
 
-    <div class="aseo-acciones">
-      <button class="btn-secondary" id="btn-editar-turnos">✏️ Editar turnos</button>
-    </div>
+      <div class="aseo-acciones">
+        <button class="btn-secondary" id="btn-editar-turnos">✏️ Editar turnos</button>
+      </div>
 
-    <div class="aseo-sin-bano">
-      <h3 class="aseo-seccion-titulo">👥 Sin baño privado</h3>
-      <div id="lista-sin-bano"></div>
+      <div class="aseo-sin-bano">
+        <h3 class="aseo-seccion-titulo">🚿 Arrendatarios con baño compartido</h3>
+        <div id="lista-sin-bano"></div>
+      </div>
     </div>
   </div>
 
@@ -443,7 +445,7 @@
         <span class="resumen-valor gasto" id="resumen-gastos">$0</span>
       </div>
       <div class="resumen-item">
-        <span class="resumen-label">Balance</span>
+        <span class="resumen-label">Ganancias</span>
         <span class="resumen-valor" id="resumen-balance">$0</span>
       </div>
     </div>
@@ -454,7 +456,12 @@
         <button class="filtro-btn" data-tipo="ingreso">Ingresos</button>
         <button class="filtro-btn" data-tipo="gasto">Gastos</button>
       </div>
-      <input type="month" id="filtro-mes" class="input-field" style="max-width:160px;padding:8px 12px">
+    </div>
+
+    <div class="finanzas-mes-selector">
+      <button id="btn-mes-anterior" class="mes-nav-btn">◀</button>
+      <span id="finanzas-mes-label">cargando...</span>
+      <button id="btn-mes-siguiente" class="mes-nav-btn">▶</button>
     </div>
 
     <div id="finanzas-lista" class="lista-contenido"></div>
@@ -500,6 +507,7 @@
     <div class="screen-content" id="configuracion-contenido">
       <div class="card" id="configuracion-usuario"></div>
       <button class="btn-danger" id="btn-cerrar-sesion">Cerrar sesión</button>
+      <span class="nineteen-credit">Desarrollado por <strong>Nineteen CDAS</strong></span>
     </div>
   </div>
 
@@ -510,7 +518,7 @@
       <span class="nav-label">Inicio</span>
     </button>
     <button class="nav-btn" data-screen="habitaciones">
-      <span class="nav-icon">🛏️</span>
+      <span class="nav-icon">🏘️</span>
       <span class="nav-label">Habitaciones</span>
     </button>
     <button class="nav-btn" data-screen="arrendatarios">
@@ -540,6 +548,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 import supabase from './supabase.js';
 import { getUsuario } from './auth.js';
+import { mostrarToast } from './toast.js';
 
 const CATEGORIAS = ['Arriendo', 'Servicios', 'Mantenimiento', 'Fachada', 'Patio', 'General', 'Otro'];
 
@@ -7,19 +8,8 @@ let registroSeleccionadoId = null;
 let filtroTipo = 'todos';
 let mesFiltro = '';
 let habitaciones = [];
-let toastTimeoutId = null;
 
 // ─── Utilidades ──────────────────────────────────────────────────────────────
-
-function mostrarToast(mensaje, esError = false) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = mensaje;
-  toast.classList.toggle('toast-error', esError);
-  toast.style.display = 'block';
-  if (toastTimeoutId) clearTimeout(toastTimeoutId);
-  toastTimeoutId = setTimeout(() => { toast.style.display = 'none'; }, 2500);
-}
 
 function getMesActual() {
   const hoy = new Date();
@@ -302,13 +292,20 @@ async function eliminarFinanza() {
 
 export { cargarYRenderFinanzas as recargarFinanzas };
 
+function actualizarMesLabel() {
+  const [y, m] = mesFiltro.split('-');
+  const label = new Date(Number(y), Number(m) - 1, 1)
+    .toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  const el = document.getElementById('finanzas-mes-label');
+  if (el) el.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 export async function initFinanzas() {
   mesFiltro = getMesActual();
 
   await cargarHabitaciones();
 
-  const inputMes = document.getElementById('filtro-mes');
-  if (inputMes) inputMes.value = mesFiltro;
+  actualizarMesLabel();
 
   // ── Delegación de clicks ──────────────────────────────────────────────────
   document.addEventListener('click', async (e) => {
@@ -321,6 +318,24 @@ export async function initFinanzas() {
     // Cancelar formulario
     if (e.target.id === 'btn-cancelar-finanza-form') {
       document.getElementById('modal-finanza-form').style.display = 'none';
+      return;
+    }
+
+    // Navegación de mes
+    if (e.target.id === 'btn-mes-anterior') {
+      const [y, m] = mesFiltro.split('-').map(Number);
+      const d = new Date(y, m - 2, 1);
+      mesFiltro = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      actualizarMesLabel();
+      await cargarYRenderFinanzas();
+      return;
+    }
+    if (e.target.id === 'btn-mes-siguiente') {
+      const [y, m] = mesFiltro.split('-').map(Number);
+      const d = new Date(y, m, 1);
+      mesFiltro = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      actualizarMesLabel();
+      await cargarYRenderFinanzas();
       return;
     }
 
@@ -405,14 +420,6 @@ export async function initFinanzas() {
   // ── Submit del formulario ─────────────────────────────────────────────────
   document.addEventListener('submit', async (e) => {
     if (e.target.id === 'form-finanza') await guardarFinanza(e);
-  });
-
-  // ── Cambio de mes ─────────────────────────────────────────────────────────
-  document.addEventListener('change', async (e) => {
-    if (e.target.id === 'filtro-mes' && e.target.value) {
-      mesFiltro = e.target.value;
-      await cargarYRenderFinanzas();
-    }
   });
 
   await cargarYRenderFinanzas();

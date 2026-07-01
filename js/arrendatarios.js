@@ -1,12 +1,12 @@
 import supabase from './supabase.js';
 import { getUsuario } from './auth.js';
+import { mostrarToast } from './toast.js';
 
 let listaArrendatarios = [];
 let filtroActual = 'todos';
 let arrendatarioEditandoId = null;
 let arrendatarioSeleccionado = null;
 let habitacionAnteriorEditando = null;
-let toastTimeoutId = null;
 
 export function initArrendatarios() {
   document.addEventListener('click', (evento) => {
@@ -32,6 +32,20 @@ export function initArrendatarios() {
     } else if (id === 'btn-editar-arrendatario') {
       if (arrendatarioSeleccionado) abrirFormEditar(arrendatarioSeleccionado);
     } else if (id === 'btn-dar-baja-arrendatario') {
+      document.getElementById('modal-arrendatario-opciones').style.display = 'none';
+      if (arrendatarioSeleccionado) {
+        const arr = arrendatarioSeleccionado;
+        const hab = arr.habitaciones;
+        document.getElementById('baja-modal-titulo').textContent = `¿Dar de baja a ${arr.nombre}?`;
+        if (hab) {
+          const tipoStr = hab.tipo === 'apartamento' ? 'el Apartamento' : 'la Habitación';
+          document.getElementById('baja-modal-texto').textContent =
+            `Esto marcará al arrendatario como inactivo y liberará ${tipoStr} ${hab.numero} para nuevos arrendatarios.`;
+        } else {
+          document.getElementById('baja-modal-texto').textContent =
+            'Esto marcará al arrendatario como inactivo y dejará de aparecer en la lista activa.';
+        }
+      }
       mostrarModal('modal-arrendatario-confirmar-baja');
     } else if (id === 'btn-cancelar-baja-arrendatario') {
       cerrarModales();
@@ -149,9 +163,18 @@ function renderArrendatarios() {
   const contenedor = document.getElementById('arrendatarios-lista');
   contenedor.innerHTML = '';
 
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const estaVencido = (a) => a.fecha_vencimiento
+    ? new Date(a.fecha_vencimiento + 'T00:00:00') < hoy
+    : false;
+
   const lista = filtroActual === 'todos'
     ? listaArrendatarios
-    : listaArrendatarios.filter((a) => a.estado_pago === filtroActual);
+    : filtroActual === 'al_dia'
+      ? listaArrendatarios.filter(a => a.estado_pago === 'al_dia' && !estaVencido(a))
+      : filtroActual === 'pendiente'
+        ? listaArrendatarios.filter(a => a.estado_pago === 'pendiente' || (a.estado_pago === 'al_dia' && estaVencido(a)))
+        : listaArrendatarios.filter(a => a.estado_pago === filtroActual);
 
   if (lista.length === 0) {
     contenedor.innerHTML = '<p class="mensaje-vacio">Aún no hay arrendatarios registrados. Toca + para agregar el primero.</p>';
@@ -883,15 +906,20 @@ async function darBaja(id) {
   try {
     const { error } = await supabase
       .from('arrendatarios')
-      .update({ activo: false })
+      .update({ activo: false, habitacion_id: null })
       .eq('id', id);
     if (error) throw error;
 
     if (arrendatario && arrendatario.habitacion_id) {
       await supabase.from('habitaciones').update({ estado: 'disponible' }).eq('id', arrendatario.habitacion_id);
+      const hab = arrendatario.habitaciones;
+      const habStr = hab
+        ? `${hab.tipo === 'apartamento' ? 'Apartamento' : 'Habitación'} ${hab.numero} disponible.`
+        : 'Habitación liberada.';
+      mostrarToast(`✅ ${arrendatario.nombre} dado de baja. ${habStr}`);
+    } else {
+      mostrarToast(`✅ ${arrendatario.nombre} dado de baja.`);
     }
-
-    mostrarToast('Arrendatario dado de baja.');
     cerrarModales();
     await cargarArrendatarios();
   } catch (error) {
@@ -915,20 +943,6 @@ function cerrarModales() {
   arrendatarioEditandoId = null;
   arrendatarioSeleccionado = null;
   habitacionAnteriorEditando = null;
-}
-
-function mostrarToast(mensaje, esError = false) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-
-  toast.textContent = mensaje;
-  toast.classList.toggle('toast-error', esError);
-  toast.style.display = 'block';
-
-  if (toastTimeoutId) clearTimeout(toastTimeoutId);
-  toastTimeoutId = setTimeout(() => {
-    toast.style.display = 'none';
-  }, 2500);
 }
 
 export { cargarArrendatarios as recargarArrendatarios };

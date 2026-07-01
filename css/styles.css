@@ -1,19 +1,67 @@
+/* ══════════════════════════════════════════
+   NINETEEN DESIGN SYSTEM — Rancho Grande
+   Nineteen CDAS · 2026
+══════════════════════════════════════════ */
 :root {
-  --primary: #2E7D32;
-  --primary-light: #E8F5E9;
-  --primary-dark: #1B5E20;
-  --accent: #F57F17;
-  --accent-light: #FFF8E1;
-  --bg: #F5F5F0;
+  /* Identidad cromática */
+  --primary:        #2E7D32;
+  --primary-light:  #E8F5E9;
+  --primary-dark:   #1B5E20;
+  --accent:         #F57F17;
+  --accent-light:   #FFF8E1;
+
+  /* Superficies */
+  --bg:      #F3F5F3;
   --surface: #FFFFFF;
-  --text-primary: #1A1A1A;
-  --text-secondary: #5D6D6E;
-  --border: #D5E8D4;
+
+  /* Texto */
+  --text-primary:   #171F17;
+  --text-secondary: #5A6B5A;
+
+  /* Bordes */
+  --border: #D0E7CF;
+
+  /* Estados semánticos */
   --success: #2E7D32;
   --warning: #F57F17;
-  --error: #C62828;
-  --radius: 14px;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+  --error:   #C62828;
+
+  /* ── Escala de espaciado NDS ── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  40px;
+
+  /* ── Radios NDS ── */
+  --radius-sm:   8px;
+  --radius-md:   14px;
+  --radius-lg:   22px;
+  --radius-full: 999px;
+  --radius:      14px;   /* alias compat */
+
+  /* ── Sombras NDS ── */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow:    var(--shadow-sm);   /* alias compat */
+
+  /* ── Tipografía NDS ── */
+  --font-size-xs:   11px;
+  --font-size-sm:   13px;
+  --font-size-base: 15px;
+  --font-size-md:   16px;
+  --font-size-lg:   18px;
+  --font-size-xl:   22px;
+  --font-size-2xl:  28px;
+
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  /* ── Transiciones NDS ── */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
 }
 
 * {
@@ -27,10 +75,12 @@ html, body {
 
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-size: 16px;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
   background: var(--bg);
   color: var(--text-primary);
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ---------- Pantallas ---------- */
@@ -49,10 +99,11 @@ body {
 }
 
 .screen-header {
-  padding: 20px 16px 12px;
-  font-size: 22px;
-  font-weight: 700;
+  padding: 20px var(--space-md) 12px;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
+  letter-spacing: -0.3px;
 }
 
 .screen-content {
@@ -69,55 +120,64 @@ body {
   gap: 10px;
 }
 
-/* ---------- Tarjetas ---------- */
+/* ---------- NCard ─ firma visual de Nineteen ---------- */
 
 .card {
   background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 16px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+  border-left: 3px solid var(--primary);
+  transition: box-shadow var(--transition-fast);
 }
 
-/* ---------- Botones ---------- */
+/* ---------- NButton ---------- */
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  min-height: 52px;
+  border-radius: var(--radius-sm);
+  padding: 14px 20px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  width: 100%;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  letter-spacing: 0.01em;
+}
 
 .btn-primary {
   background: var(--primary);
   color: #FFFFFF;
-  border-radius: 8px;
-  padding: 14px 20px;
-  font-size: 16px;
-  font-weight: 600;
   border: none;
-  cursor: pointer;
-  width: 100%;
 }
 
 .btn-primary:active {
   background: var(--primary-dark);
+  transform: scale(0.97);
 }
 
 .btn-secondary {
   background: transparent;
-  border: 2px solid var(--primary);
+  border: 1.5px solid var(--primary);
   color: var(--primary);
-  border-radius: 8px;
-  padding: 14px 20px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
+}
+
+.btn-secondary:active {
+  background: var(--primary-light);
+  transform: scale(0.97);
 }
 
 .btn-danger {
   background: var(--error);
   color: #FFFFFF;
-  border-radius: 8px;
-  padding: 14px 20px;
-  font-size: 16px;
-  font-weight: 600;
   border: none;
-  cursor: pointer;
-  width: 100%;
+}
+
+.btn-danger:active {
+  opacity: 0.88;
+  transform: scale(0.97);
 }
 
 .btn-flotante {
@@ -130,15 +190,18 @@ body {
   width: 100%;
   padding: 14px;
   border: 1.5px solid var(--border);
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-family: inherit;
   background: var(--surface);
   color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .input-field:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.12);
 }
 
 label {
@@ -165,19 +228,41 @@ label {
 
 .nav-btn {
   flex: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 10px 4px;
   font-size: 11px;
+  font-weight: var(--font-weight-medium);
   color: var(--text-secondary);
   border: none;
   background: transparent;
   cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+/* Indicador Nineteen — línea en la cima del botón activo */
+.nav-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 28px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 0 0 3px 3px;
+  transition: transform var(--transition-base);
 }
 
 .nav-btn.active {
   color: var(--primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.nav-btn.active::before {
+  transform: translateX(-50%) scaleX(1);
 }
 
 .nav-icon {
@@ -233,19 +318,49 @@ label {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   z-index: 200;
   display: flex;
   align-items: flex-end;
 }
 
+@keyframes nds-modal-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .modal {
   background: var(--surface);
-  border-radius: 24px 24px 0 0;
-  padding: 24px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-lg);
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  position: relative;
+  animation: nds-modal-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 50%;
+  transition: background 0.15s;
+  z-index: 10;
+}
+.modal-close-btn:hover,
+.modal-close-btn:active {
+  background: var(--border);
+  color: var(--text-primary);
 }
 
 /* ---------- Login ---------- */
@@ -267,49 +382,55 @@ label {
 }
 
 .login-logo {
-  font-size: 56px;
-  margin-bottom: 8px;
+  font-size: 60px;
+  margin-bottom: 12px;
+  line-height: 1;
 }
 
 .login-titulo {
-  font-size: 32px;
-  font-weight: 800;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
   color: var(--primary-dark);
   margin: 0;
+  letter-spacing: -0.5px;
 }
 
 .login-subtitulo {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   color: var(--text-secondary);
-  margin: 8px 0 32px;
+  margin: 8px 0 36px;
+  font-weight: var(--font-weight-medium);
 }
 
 .login-usuarios {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
 }
 
 .login-usuario-card {
   background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border: 1.5px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   padding: 20px;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   cursor: pointer;
   width: 100%;
   display: flex;
   align-items: center;
   gap: 14px;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 .login-usuario-card:active {
   background: var(--primary-light);
-  border-color: var(--primary);
+  border-left-color: var(--primary-dark);
+  transform: scale(0.98);
 }
 
 .login-usuario-avatar {
@@ -352,10 +473,15 @@ label {
 }
 
 .mensaje-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
   text-align: center;
   color: var(--text-secondary);
-  padding: 40px 20px;
-  font-size: 16px;
+  padding: 48px 32px;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
 }
 
 .mensaje-error {
@@ -491,28 +617,45 @@ label {
   min-height: 48px;
 }
 
-/* ---------- Toast ---------- */
-
+/* ═══════════════════════════════════
+   TOAST NOTIFICATIONS
+═══════════════════════════════════ */
+#toast-container {
+  position: fixed !important;
+  bottom: 90px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  pointer-events: none !important;
+  width: 90% !important;
+  max-width: 360px !important;
+}
 .toast {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--primary-dark);
-  color: #FFFFFF;
-  padding: 12px 20px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  box-shadow: var(--shadow);
-  z-index: 400;
-  text-align: center;
-  max-width: 90%;
+  background: #323232 !important;
+  color: #FFFFFF !important;
+  padding: 12px 20px !important;
+  border-radius: 24px !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+  opacity: 0 !important;
+  transform: translateY(20px) !important;
+  transition: opacity 0.3s ease, transform 0.3s ease !important;
+  pointer-events: none !important;
+  width: 100% !important;
+  display: block !important;
 }
-
-.toast.toast-error {
-  background: var(--error);
-}
+.toast--visible  { opacity: 1 !important; transform: translateY(0) !important; }
+.toast--success  { background: #2E7D32 !important; }
+.toast--error    { background: #C62828 !important; }
+.toast--warning  { background: #F57F17 !important; }
+.toast--realtime { background: #1565C0 !important; }
+.toast--info     { background: #323232 !important; }
 
 /* ---------- Filtros (arrendatarios) ---------- */
 
@@ -522,6 +665,40 @@ label {
   padding: 8px 16px;
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+/* Pantallas con zona fija + zona scrolleable */
+#screen-arrendatarios,
+#screen-habitaciones,
+#screen-aseo,
+#screen-finanzas {
+  overflow: hidden;
+}
+
+#finanzas-lista {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.aseo-contenido {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+#screen-arrendatarios .filtros-bar {
+  flex-shrink: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+}
+
+#arrendatarios-lista,
+#habitaciones-lista {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .filtros-bar::-webkit-scrollbar {
@@ -636,6 +813,31 @@ label {
 .aseo-acciones { padding:12px 16px 0; }
 .aseo-sin-bano { padding:16px 16px 100px; }
 .aseo-seccion-titulo { font-size:16px; font-weight:700; color:var(--text-primary); margin-bottom:12px; }
+.aseo-arrendatario-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.aseo-arr-nombre { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
+.aseo-arr-info { display: flex; flex-direction: column; gap: 2px; }
+.aseo-arr-hab { font-size: 0.8rem; color: var(--text-secondary); }
+.aseo-arr-stats { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.aseo-arr-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.aseo-arr-badge--ok       { background: #E8F5E9; color: #2E7D32; }
+.aseo-arr-badge--mora     { background: #FFEBEE; color: #C62828; }
+.aseo-arr-badge--neutro   { background: var(--border); color: var(--text-secondary); }
+.aseo-arr-badge--pendiente{ background: #FFF9C4; color: #F57F17; }
+.aseo-arr-contador { font-size: 0.72rem; color: var(--text-secondary); }
 .aseo-persona-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); font-size:15px; }
 .turno-fila { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
 .turno-dia-label { font-size:14px; font-weight:600; color:var(--text-secondary); min-width:48px; }
@@ -643,13 +845,52 @@ label {
 
 /* ---------- Finanzas ---------- */
 
-.finanzas-resumen { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:12px 16px; }
-.resumen-item { background:var(--surface); border-radius:12px; padding:12px 8px; text-align:center; box-shadow:var(--shadow); }
-.resumen-label { display:block; font-size:11px; color:var(--text-secondary); font-weight:600; margin-bottom:4px; }
-.resumen-valor { display:block; font-size:16px; font-weight:700; }
+/* NStatCard — Finanzas resumen */
+.finanzas-resumen { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:12px var(--space-md); }
+.resumen-item {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 12px 8px 14px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border-top: 3px solid var(--primary-light);
+}
+.resumen-label { display:block; font-size:var(--font-size-xs); color:var(--text-secondary); font-weight:var(--font-weight-semibold); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em; }
+.resumen-valor { display:block; font-size:var(--font-size-md); font-weight:var(--font-weight-bold); letter-spacing:-0.3px; }
 .resumen-valor.ingreso { color:var(--primary); }
-.resumen-valor.gasto { color:var(--error); }
-.finanzas-filtros { display:flex; gap:8px; padding:8px 16px; align-items:center; overflow-x:auto; }
+.resumen-valor.gasto   { color:var(--error); }
+.finanzas-filtros { flex-shrink: 0; background: var(--bg); }
+.finanzas-mes-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+.mes-nav-btn {
+  background: var(--primary-light);
+  border: none;
+  color: var(--primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+}
+.mes-nav-btn:active { background: var(--primary); color: white; }
+#finanzas-mes-label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-align: center;
+  text-transform: capitalize;
+}
 .registro-card { margin-bottom:10px; cursor:pointer; }
 .registro-card:active { transform:scale(0.98); }
 .registro-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
@@ -671,19 +912,265 @@ label {
 .inicio-saludo { font-size:22px; font-weight:700; color:var(--text-primary); }
 .inicio-fecha { font-size:13px; color:var(--text-secondary); margin-top:2px; }
 .btn-cerrar-sesion { background:transparent; border:1.5px solid var(--border); color:var(--text-secondary); border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; }
-.resumen-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px 16px; }
-.resumen-card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px 12px; display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
-.resumen-card-icon { font-size:24px; }
-.resumen-card-valor { font-size:22px; font-weight:700; color:var(--text-primary); }
-.resumen-card-valor.ingreso { color:var(--primary); }
-.resumen-card-valor.gasto { color:var(--error); }
-.resumen-card-label { font-size:13px; font-weight:600; color:var(--text-secondary); }
-.resumen-card-sub { font-size:11px; color:var(--text-secondary); }
-.inicio-seccion { padding:0 16px 16px; }
-.inicio-seccion-titulo { font-size:16px; font-weight:700; color:var(--text-primary); margin-bottom:10px; }
+/* NStatCard — Inicio dashboard */
+.resumen-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 var(--space-md) var(--space-md); }
+.resumen-card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border-top: 3px solid var(--primary-light);
+}
+.resumen-card-icon { font-size: 20px; margin-bottom: 4px; }
+.resumen-card-valor { font-size: 22px; font-weight: var(--font-weight-bold); color: var(--text-primary); letter-spacing: -0.5px; }
+.resumen-card-valor.ingreso { color: var(--primary); }
+.resumen-card-valor.gasto   { color: var(--error); }
+.resumen-card-label { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--text-secondary); }
+.resumen-card-sub   { font-size: var(--font-size-xs); color: var(--text-secondary); opacity: 0.8; }
+/* NSection — separador de secciones */
+.inicio-seccion { padding:0 var(--space-md) var(--space-md); }
+.inicio-seccion-titulo {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
 .urgente-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
 .urgente-nombre { font-size:15px; font-weight:600; color:var(--text-primary); }
 .urgente-info { font-size:12px; color:var(--text-secondary); }
 .urgente-estado { font-size:12px; font-weight:600; color:var(--error); }
 .aseo-hoy-card { background:var(--surface); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); font-size:15px; }
-.toast-realtime { background: var(--primary-dark) !important; }
+
+/* ---------- Mora cards (Inicio) ---------- */
+.mora-card {
+  background: var(--surface);
+  border: 1.5px solid #FFCDD2;
+  border-left: 4px solid var(--error);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.mora-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.mora-nombre { font-weight: 600; font-size: 1rem; color: var(--text-primary); }
+.mora-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.mora-badge--atrasado  { background: #FFEBEE; color: #C62828; }
+.mora-badge--vencido   { background: #FFF3E0; color: #E65100; }
+.mora-badge--pendiente { background: #FFF9C4; color: #F57F17; }
+.mora-card-body {
+  display: flex;
+  gap: 12px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.mora-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.mora-debe-label { font-size: 0.8rem; color: var(--text-secondary); }
+.mora-debe-valor { font-weight: 700; font-size: 1.05rem; color: var(--error); }
+.mora-vacio {
+  text-align: center;
+  color: var(--success);
+  font-size: 0.9rem;
+  padding: 16px 0;
+}
+
+/* NSection — Habitaciones disponibles / ocupadas */
+.hab-seccion { margin-bottom: var(--space-lg); }
+.hab-seccion-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 4px 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.hab-seccion-titulo {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--primary);
+}
+.hab-seccion-titulo.ocupadas { color: var(--text-secondary); }
+.hab-seccion-count {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+  margin-left: auto;
+  background: var(--bg);
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+}
+.hab-seccion-grid { display: flex; flex-direction: column; gap: 10px; }
+.hab-seccion-vacio {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 16px 0;
+  font-style: italic;
+}
+
+/* ══════════════════════════════════════════
+   NDS — COMPONENTES ADICIONALES
+══════════════════════════════════════════ */
+
+/* NEmptyState */
+.nds-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+  padding: 52px var(--space-lg);
+  color: var(--text-secondary);
+}
+.nds-empty-icon { font-size: 36px; opacity: 0.5; }
+.nds-empty-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+.nds-empty-text {
+  font-size: var(--font-size-sm);
+  margin: 0;
+  max-width: 240px;
+  line-height: 1.5;
+}
+
+/* NSection separator */
+.nds-section-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+/* Habitación card: borde según estado */
+.habitacion-card {
+  margin-bottom: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.habitacion-card:active { transform: scale(0.98); }
+
+/* Cards en sección disponibles: acento verde */
+#grid-disponibles .habitacion-card { border-left-color: var(--primary); }
+/* Cards en sección ocupadas: acento gris */
+#grid-ocupadas .habitacion-card { border-left-color: var(--text-secondary); }
+
+/* Mora cards: borde izquierdo rojo propio */
+.mora-card {
+  border-left-color: var(--error) !important;
+}
+
+/* FAB: sombra más suave y coherente */
+.fab-btn {
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+.fab-btn:active {
+  background: var(--primary-dark);
+  transform: scale(0.93);
+}
+
+/* Botón cerrar sesión (header de inicio) */
+.btn-cerrar-sesion {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+  min-height: 44px;
+}
+.btn-cerrar-sesion:active {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Badge de filtro activo con acento naranja para "Atrasados" */
+.filtro-btn[data-filtro="atrasado"].active,
+.filtro-btn[data-tipo="gasto"].active {
+  background: var(--error);
+  border-color: var(--error);
+}
+
+/* Modal título */
+.modal-titulo {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+  letter-spacing: -0.2px;
+}
+
+/* Inicio header */
+.inicio-saludo {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+.inicio-fecha {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-top: 2px;
+  font-weight: var(--font-weight-medium);
+}
+
+/* ══════════════════════════════════════════
+   NINETEEN CREDIT — Firma de autoría
+══════════════════════════════════════════ */
+.nineteen-credit {
+  display: block;
+  text-align: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  padding: var(--space-lg) var(--space-md);
+  margin-top: auto;
+}
+.nineteen-credit strong {
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-dark);
+  opacity: 1;
+}

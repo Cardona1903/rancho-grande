@@ -8,8 +8,27 @@ import { initAseo, recargarAseo } from './aseo.js';
 import { initFinanzas, recargarFinanzas } from './finanzas.js';
 import { initInicio } from './inicio.js';
 import { exportarExcel } from './exportar.js';
+import { mostrarToast } from './toast.js';
+export { mostrarToast };
 
 let realtimeActivo = false;
+
+// ─── Botón X en todos los modales ────────────────────────────────────────────
+
+function inyectarBotonesClose() {
+  document.querySelectorAll('.modal-overlay .modal').forEach(modal => {
+    if (modal.querySelector('.modal-close-btn')) return;
+    const btn = document.createElement('button');
+    btn.className = 'modal-close-btn';
+    btn.setAttribute('aria-label', 'Cerrar');
+    btn.innerHTML = '&times;';
+    btn.addEventListener('click', () => {
+      const overlay = modal.closest('.modal-overlay');
+      if (overlay) overlay.style.display = 'none';
+    });
+    modal.prepend(btn);
+  });
+}
 
 // ─── Navegación entre pantallas ───────────────────────────────────────────────
 
@@ -35,24 +54,10 @@ function mostrarNavBar(mostrar) {
   if (navBar) navBar.style.display = mostrar ? 'flex' : 'none';
 }
 
-// ─── Toast global para cambios Realtime ──────────────────────────────────────
+// ─── Toast para cambios Realtime ──────────────────────────────────────────────
 
 function mostrarToastGlobal(mensaje) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-
-  if (toast.style.display === 'block') {
-    setTimeout(() => mostrarToastGlobal(mensaje), 500);
-    return;
-  }
-
-  toast.textContent = mensaje;
-  toast.className = 'toast toast-realtime';
-  toast.style.display = 'block';
-  setTimeout(() => {
-    toast.style.display = 'none';
-    toast.className = 'toast';
-  }, 3000);
+  mostrarToast(mensaje, 'realtime', 4000);
 }
 
 // ─── Recarga de la pantalla activa ────────────────────────────────────────────
@@ -187,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   window.addEventListener('offline', actualizarBannerOffline);
 
+  inyectarBotonesClose();
   renderLogin();
   iniciarSesionUI();
   inicializarNavegacion();
@@ -204,4 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error al registrar el service worker:', error);
     });
   }
+
+  setTimeout(() => mostrarToast('Rancho Grande listo ✓', 'success'), 1500);
 });

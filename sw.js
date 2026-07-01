@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranchgrande-v2';
+const CACHE_NAME = 'ranchgrande-v4';
 
 const RECURSOS_ESTATICOS = [
   '/',
@@ -16,6 +16,7 @@ const RECURSOS_ESTATICOS = [
   '/js/aseo.js',
   '/js/finanzas.js',
   '/js/exportar.js',
+  '/js/toast.js',
 ];
 
 self.addEventListener('install', (event) => {

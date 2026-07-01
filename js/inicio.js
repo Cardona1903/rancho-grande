@@ -69,81 +69,68 @@ function renderArrendatarios(data) {
   document.getElementById('card-arr-sub').textContent   = `${alDia} al día · ${pendientes} pendientes`;
 }
 
-const BADGE_ESTADO = {
-  al_dia:   '<span class="badge badge-success">✅ Al día</span>',
-  pendiente: '<span class="badge badge-warning">⏳ Pendiente</span>',
-  atrasado:  '<span class="badge badge-error">🔴 Atrasado</span>',
-};
-
-function prioridadUrgente(a) {
-  if (a.estado_pago === 'atrasado') return 0;
-  if (a.estado_pago === 'pendiente' && a.saldo_pendiente > 0) return 1;
-  return 2;
-}
-
 function renderUrgentes(arrendatarios) {
   const el = document.getElementById('inicio-urgentes');
   if (!el) return;
 
-  const urgentes = arrendatarios
+  const enMora = arrendatarios
     .filter(a => {
       if (a.estado_pago === 'atrasado') return true;
       if (a.estado_pago === 'pendiente' && a.saldo_pendiente > 0) return true;
-      if (a.fecha_vencimiento && diasHastaVencer(a.fecha_vencimiento) <= 5) return true;
+      if (a.fecha_vencimiento && diasHastaVencer(a.fecha_vencimiento) < 0) return true;
       return false;
     })
+    .map(a => {
+      const base = a.saldo_pendiente > 0 ? a.saldo_pendiente : (a.valor_arriendo || 0);
+      return { ...a, _debe: base - (a.abono_recibido || 0) };
+    })
+    .filter(a => a._debe > 0)
     .sort((a, b) => {
-      const pDiff = prioridadUrgente(a) - prioridadUrgente(b);
+      const orden = { atrasado: 0, pendiente: 1, al_dia: 2 };
+      const pDiff = (orden[a.estado_pago] ?? 2) - (orden[b.estado_pago] ?? 2);
       if (pDiff !== 0) return pDiff;
-      // Dentro de la misma prioridad: primero el que vence antes
-      const dA = a.fecha_vencimiento ? diasHastaVencer(a.fecha_vencimiento) : 999;
-      const dB = b.fecha_vencimiento ? diasHastaVencer(b.fecha_vencimiento) : 999;
+      const dA = a.fecha_vencimiento ? diasHastaVencer(a.fecha_vencimiento) : 0;
+      const dB = b.fecha_vencimiento ? diasHastaVencer(b.fecha_vencimiento) : 0;
       return dA - dB;
     });
 
-  if (urgentes.length === 0) {
-    el.innerHTML = '<div class="aseo-hoy-card" style="color:var(--primary)">✅ Todo al día</div>';
+  if (enMora.length === 0) {
+    el.innerHTML = '<p class="mora-vacio">✅ Todos los arrendatarios están al día</p>';
     return;
   }
 
-  const mostrados = urgentes.slice(0, 5);
-  el.innerHTML = mostrados.map(a => {
-    const hab    = a.habitaciones;
+  el.innerHTML = enMora.map(a => {
+    const hab = a.habitaciones;
     const habStr = hab ? `${hab.tipo === 'apartamento' ? 'Apto' : 'Hab.'} ${hab.numero}` : '';
-    const dias   = a.fecha_vencimiento ? diasHastaVencer(a.fecha_vencimiento) : null;
+    const dias = a.fecha_vencimiento ? diasHastaVencer(a.fecha_vencimiento) : null;
 
-    let vencimientoStr = '';
-    if (dias !== null && dias < 0) {
-      vencimientoStr = `Venció hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`;
-    } else if (dias === 0) {
-      vencimientoStr = 'Vence hoy';
-    } else if (dias !== null && dias <= 5) {
-      vencimientoStr = `Vence en ${dias} día${dias !== 1 ? 's' : ''}`;
+    let diasStr = '';
+    if (dias !== null) {
+      if (dias < 0) diasStr = `Venció hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`;
+      else if (dias === 0) diasStr = 'Vence hoy';
+      else diasStr = `Vence en ${dias} día${dias !== 1 ? 's' : ''}`;
     }
 
-    const deudaStr = a.saldo_pendiente > 0
-      ? `<div class="urgente-estado">Debe: ${formatearPrecio(a.saldo_pendiente)}</div>`
-      : '';
-    const vencStr = vencimientoStr
-      ? `<div class="urgente-info">${vencimientoStr}</div>`
-      : '';
+    let badgeClass, badgeLabel;
+    if (a.estado_pago === 'atrasado') { badgeClass = 'mora-badge--atrasado'; badgeLabel = 'Atrasado'; }
+    else if (a.estado_pago === 'pendiente') { badgeClass = 'mora-badge--pendiente'; badgeLabel = 'Pendiente'; }
+    else { badgeClass = 'mora-badge--vencido'; badgeLabel = 'Vencido'; }
 
-    return `<div class="urgente-item">
-      <div>
-        <div class="urgente-nombre">${a.nombre}</div>
-        <div class="urgente-info">${habStr}</div>
-        ${vencStr}
+    return `<div class="mora-card">
+      <div class="mora-card-header">
+        <span class="mora-nombre">${a.nombre}</span>
+        <span class="mora-badge ${badgeClass}">${badgeLabel}</span>
       </div>
-      <div style="text-align:right">
-        ${BADGE_ESTADO[a.estado_pago] || ''}
-        ${deudaStr}
+      <div class="mora-card-body">
+        ${habStr ? `<span class="mora-hab">${habStr}</span>` : ''}
+        ${diasStr ? `<span class="mora-dias">${diasStr}</span>` : ''}
+      </div>
+      <div class="mora-card-footer">
+        <span class="mora-debe-label">Debe</span>
+        <span class="mora-debe-valor">${formatearPrecio(a._debe)}</span>
       </div>
     </div>`;
   }).join('');
-
-  if (urgentes.length > 5) {
-    el.innerHTML += `<p style="font-size:13px;color:var(--text-secondary);padding:8px 0">y ${urgentes.length - 5} más...</p>`;
-  }
 }
 
 function renderAseoHoy(turnoData) {
@@ -185,7 +172,7 @@ export async function initInicio() {
   const [resHabs, resArrs, resIngresos, resGastos, resTurno] = await Promise.allSettled([
     supabase.from('habitaciones').select('id, estado'),
     supabase.from('arrendatarios')
-      .select('id, estado_pago, nombre, fecha_vencimiento, saldo_pendiente, habitaciones(numero, tipo)')
+      .select('id, nombre, habitacion_id, estado_pago, saldo_pendiente, abono_recibido, valor_arriendo, fecha_vencimiento, habitaciones(numero, tipo)')
       .eq('activo', true),
     supabase.from('finanzas')
       .select('valor')
