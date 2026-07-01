@@ -47,11 +47,11 @@
 
   /* ── Tipografía NDS ── */
   --font-size-xs:   11px;
-  --font-size-sm:   13px;
+  --font-size-sm:   14px;
   --font-size-base: 15px;
-  --font-size-md:   16px;
+  --font-size-md:   17px;
   --font-size-lg:   18px;
-  --font-size-xl:   22px;
+  --font-size-xl:   24px;
   --font-size-2xl:  28px;
 
   --font-weight-normal:   400;
@@ -266,11 +266,12 @@ label {
 }
 
 .nav-icon {
-  font-size: 22px;
+  font-size: 27px;
 }
 
 .nav-label {
   margin-top: 2px;
+  font-size: 13px;
 }
 
 /* ---------- Insignias ---------- */
@@ -732,7 +733,7 @@ label {
 }
 
 .arrendatario-habitacion {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
   margin-bottom: 4px;
 }
@@ -740,23 +741,23 @@ label {
 .vencimiento-urgente {
   color: var(--error);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .vencimiento-normal {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .arrendatario-debe {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--error);
   font-weight: 600;
   margin-top: 4px;
 }
 
 .arrendatario-abono {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--warning);
 }
 
@@ -945,8 +946,8 @@ label {
 }
 .urgente-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
 .urgente-nombre { font-size:15px; font-weight:600; color:var(--text-primary); }
-.urgente-info { font-size:12px; color:var(--text-secondary); }
-.urgente-estado { font-size:12px; font-weight:600; color:var(--error); }
+.urgente-info { font-size:13px; color:var(--text-secondary); }
+.urgente-estado { font-size:13px; font-weight:600; color:var(--error); }
 .aseo-hoy-card { background:var(--surface); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); font-size:15px; }
 
 /* ---------- Mora cards (Inicio) ---------- */
