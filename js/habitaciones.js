@@ -6,8 +6,11 @@ console.log('habitaciones.js cargado');
 
 let habitacionEditandoId = null;
 let habitacionSeleccionada = null;
+let _inicializado = false;
 
 export function initHabitaciones() {
+  if (_inicializado) return;
+  _inicializado = true;
   console.log('initHabitaciones ejecutado');
   console.log('Botón nueva hab:', document.getElementById('btn-nueva-habitacion'));
   console.log('Botón guardar hab:', document.getElementById('btn-guardar-habitacion'));
@@ -175,6 +178,7 @@ async function manejarSubmitFormulario(evento) {
 
 async function guardarHabitacion(datos) {
   const btnGuardar = document.getElementById('btn-guardar-habitacion');
+  if (btnGuardar.disabled) return;
   btnGuardar.disabled = true;
   btnGuardar.textContent = 'Guardando...';
 

@@ -6,6 +6,7 @@ const DIAS_LABEL  = ['Lun','Mar','Mié','Jue','Vie','Sáb'];
 
 let semanaActual = '';
 let arrendatariosSinBano = [];
+let _inicializado = false;
 
 function getLunesActual() {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -202,6 +203,9 @@ async function abrirModalEditarTurnos() {
 }
 
 async function guardarTurnos() {
+  const btn = document.getElementById('btn-guardar-turnos');
+  if (btn?.disabled) return;
+  if (btn) btn.disabled = true;
   const selects = document.querySelectorAll('#aseo-form-turnos .turno-select');
 
   // Leer estado actual de Supabase para comparar
@@ -219,7 +223,6 @@ async function guardarTurnos() {
       const turnoActual = turnosPorDia[dia];
 
       if (!turnoActual && nuevoArrendatarioId) {
-        // INSERT nuevo turno
         await supabase.from('aseo_turnos').insert({
           arrendatario_id: nuevoArrendatarioId,
           dia_semana: dia,
@@ -227,13 +230,10 @@ async function guardarTurnos() {
           completado: false
         });
       } else if (turnoActual && nuevoArrendatarioId && turnoActual.arrendatario_id !== nuevoArrendatarioId) {
-        // UPDATE cambió de arrendatario
         await supabase.from('aseo_turnos').update({ arrendatario_id: nuevoArrendatarioId }).eq('id', turnoActual.id);
       } else if (turnoActual && !nuevoArrendatarioId) {
-        // DELETE se quitó el turno
         await supabase.from('aseo_turnos').delete().eq('id', turnoActual.id);
       }
-      // Si no cambió: no hacer nada
     }
     mostrarToast('Turnos guardados ✅');
     document.getElementById('modal-aseo-editar').style.display = 'none';
@@ -241,12 +241,16 @@ async function guardarTurnos() {
   } catch (err) {
     mostrarToast('Error al guardar turnos', true);
     console.error(err);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
 export { cargarYRenderGrid as recargarAseo };
 
 export async function initAseo() {
+  if (_inicializado) return;
+  _inicializado = true;
   semanaActual = getLunesActual();
   actualizarLabelSemana();
   arrendatariosSinBano = await cargarArrendatariosSinBano();

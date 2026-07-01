@@ -8,6 +8,7 @@ let registroSeleccionadoId = null;
 let filtroTipo = 'todos';
 let mesFiltro = '';
 let habitaciones = [];
+let _inicializado = false;
 
 // ─── Utilidades ──────────────────────────────────────────────────────────────
 
@@ -223,6 +224,9 @@ async function abrirFormEditar(id) {
 
 async function guardarFinanza(e) {
   e.preventDefault();
+  const btn = document.getElementById('btn-guardar-finanza');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
 
   const tipo      = document.querySelector('input[name="tipo-finanza"]:checked')?.value;
   const concepto  = document.getElementById('campo-finanza-concepto')?.value.trim();
@@ -267,6 +271,8 @@ async function guardarFinanza(e) {
   } catch (err) {
     mostrarToast(`Error al guardar: ${err.message}`, true);
     console.error(err);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -301,6 +307,8 @@ function actualizarMesLabel() {
 }
 
 export async function initFinanzas() {
+  if (_inicializado) return;
+  _inicializado = true;
   mesFiltro = getMesActual();
 
   await cargarHabitaciones();

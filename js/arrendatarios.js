@@ -7,8 +7,11 @@ let filtroActual = 'todos';
 let arrendatarioEditandoId = null;
 let arrendatarioSeleccionado = null;
 let habitacionAnteriorEditando = null;
+let _inicializado = false;
 
 export function initArrendatarios() {
+  if (_inicializado) return;
+  _inicializado = true;
   document.addEventListener('click', (evento) => {
     const id = evento.target.id;
     const filtroBtn = evento.target.closest('.filtro-btn');
@@ -346,6 +349,7 @@ async function manejarSubmitDatosArrendatario(evento) {
 
 async function crearArrendatarioBase(datos) {
   const btnGuardar = document.getElementById('btn-guardar-datos-arrendatario');
+  if (btnGuardar.disabled) return;
   btnGuardar.disabled = true;
   btnGuardar.textContent = 'Guardando...';
 
@@ -501,6 +505,7 @@ async function manejarSubmitHabitacionPago(evento) {
 
 async function guardarHabitacionPago(arrendatario, datos) {
   const btnGuardar = document.getElementById('btn-guardar-habitacion-pago');
+  if (btnGuardar.disabled) return;
   btnGuardar.disabled = true;
   btnGuardar.textContent = 'Guardando...';
 
@@ -697,6 +702,7 @@ async function manejarSubmitArrendatario(evento) {
 
 async function actualizarArrendatario(datos) {
   const btnGuardar = document.getElementById('btn-guardar-arrendatario');
+  if (btnGuardar.disabled) return;
   btnGuardar.disabled = true;
   btnGuardar.textContent = 'Guardando...';
 
@@ -815,6 +821,7 @@ async function manejarSubmitPago(evento) {
 
 async function registrarPago(arrendatario, datosPago) {
   const btnGuardar = document.getElementById('btn-guardar-pago');
+  if (btnGuardar.disabled) return;
   btnGuardar.disabled = true;
   btnGuardar.textContent = 'Registrando...';
 
