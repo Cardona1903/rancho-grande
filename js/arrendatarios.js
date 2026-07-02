@@ -268,7 +268,10 @@ function renderArrendatarios() {
       return;
     }
 
-    const habitacionTexto = `${habitacion.tipo === 'apartamento' ? 'Apto' : 'Hab.'} ${habitacion.numero}`;
+    // Los apartamentos ya guardan el prefijo en `numero` (ej: "Apto # 2").
+    const habitacionTexto = habitacion.tipo === 'apartamento'
+      ? (habitacion.numero || '')
+      : `Hab. ${habitacion.numero}`;
 
     const dias = diasHastaVencer(arrendatario.fecha_vencimiento);
     let vencimientoHtml;
@@ -406,8 +409,9 @@ async function llenarSelectHabitaciones(select, habitacionActualId) {
       const opcion = document.createElement('option');
       opcion.value = habitacion.id;
       opcion.dataset.precio = habitacion.precio;
-      const prefijo = habitacion.tipo === 'apartamento' ? 'Apto' : 'Hab.';
-      opcion.textContent = `${prefijo} ${habitacion.numero} — $ ${formatearPrecio(habitacion.precio)}`;
+      // Los apartamentos ya guardan el prefijo en `numero` (ej: "Apto # 2").
+      const etiqueta = habitacion.tipo === 'apartamento' ? habitacion.numero : `Hab. ${habitacion.numero}`;
+      opcion.textContent = `${etiqueta} — $ ${formatearPrecio(habitacion.precio)}`;
       if (habitacion.id === habitacionActualId) opcion.selected = true;
       select.appendChild(opcion);
     });

@@ -36,8 +36,9 @@ function formatearFecha(isoDate) {
 
 function etiquetaHabitacion(hab) {
   if (!hab) return '';
-  const tipo = hab.tipo === 'apartamento' ? 'Apto' : 'Hab';
-  return `${tipo}. ${hab.numero}`;
+  // Los apartamentos ya guardan el prefijo en `numero` (ej: "Apto # 2").
+  if (hab.tipo === 'apartamento') return hab.numero || '';
+  return `Hab. ${hab.numero}`;
 }
 
 // ─── Carga de datos ───────────────────────────────────────────────────────────

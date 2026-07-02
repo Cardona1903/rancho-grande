@@ -98,7 +98,8 @@ function renderUrgentes(arrendatarios) {
 
   el.innerHTML = enMora.map(a => {
     const hab = a.habitaciones;
-    const habStr = hab ? `${hab.tipo === 'apartamento' ? 'Apto' : 'Hab.'} ${hab.numero}` : '';
+    // Los apartamentos ya guardan el prefijo en `numero` (ej: "Apto # 2").
+    const habStr = hab ? (hab.tipo === 'apartamento' ? hab.numero : `Hab. ${hab.numero}`) : '';
     const dias = a.fecha_vencimiento ? diasHastaVencer(a.fecha_vencimiento) : null;
 
     let diasStr = '';

@@ -72,7 +72,8 @@ async function cargarArrendatariosSinBano() {
 
     lista.innerHTML = data.map(a => {
       const hab            = a.habitaciones;
-      const tipoLabel      = hab.tipo === 'apartamento' ? 'Apto' : 'Habitación';
+      // Los apartamentos ya guardan el prefijo en `numero` (ej: "Apto # 2").
+      const habLabel       = hab.tipo === 'apartamento' ? hab.numero : `Habitación ${hab.numero}`;
       const misTurnos      = turnosEstaSemana.filter(t => t.arrendatario_id === a.id);
       const totalAsignados = misTurnos.length;
       const hechos         = misTurnos.filter(t => t.completado).length;
@@ -100,7 +101,7 @@ async function cargarArrendatariosSinBano() {
       return `<div class="aseo-arrendatario-card">
         <div class="aseo-arr-info">
           <div class="aseo-arr-nombre">${a.nombre}</div>
-          <div class="aseo-arr-hab">🏠 ${tipoLabel} ${hab.numero}</div>
+          <div class="aseo-arr-hab">🏠 ${habLabel}</div>
         </div>
         <div class="aseo-arr-stats">
           <span class="aseo-arr-badge aseo-arr-badge--${badgeClase}">${badgeTexto}</span>

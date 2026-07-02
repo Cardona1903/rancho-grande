@@ -54,7 +54,10 @@ function formatearFecha(isoStr) {
 
 function habLabel(hab) {
   if (!hab) return '';
-  return `${hab.tipo === 'apartamento' ? 'Apto' : 'Hab'} ${hab.numero}`;
+  // Los apartamentos ya guardan el prefijo en `numero` (ej: "Apto # 2");
+  // las habitaciones no ("# 1"), así que solo a ellas se les antepone "Hab".
+  if (hab.tipo === 'apartamento') return hab.numero || '';
+  return `Hab ${hab.numero || ''}`;
 }
 
 async function obtenerDatos(mesFiltro) {
@@ -387,6 +390,58 @@ function construirHojaPagos(datos, mesFiltro) {
   return ws;
 }
 
+// ── Hoja 5: Pagos Pendientes ──────────────────────────────────────────────────
+
+function construirHojaPagosPendientes(datos, mesFiltro) {
+  const NCOLS = 5;
+  const vaciosEnc = Array(NCOLS - 1).fill(null).map(() => celdaEncH(''));
+  const pendientes = datos.filter(a => (a.saldo_pendiente || 0) > 0);
+
+  const filas = [
+    [celdaEncH(`RANCHO GRANDE — Pagos Pendientes · ${labelMes(mesFiltro)}`), ...vaciosEnc],
+    [
+      celdaSubH('Nombre'),   celdaSubH('Habitación'),        celdaSubH('Abono ($)'),
+      celdaSubH('Arriendo ($)'), celdaSubH('Saldo pendiente ($)'),
+    ],
+  ];
+
+  if (pendientes.length === 0) {
+    filas.push([celdaTitulo('No hay pagos pendientes este mes 🎉'), ...Array(NCOLS - 1).fill(null).map(() => celdaTitulo(''))]);
+  } else {
+    pendientes.forEach((a, i) => {
+      const esGris = i % 2 === 1;
+      const bg     = v => esGris ? celdaGris(v) : celdaNormal(v);
+
+      filas.push([
+        bg(a.nombre || ''),
+        bg(habLabel(a.habitaciones) || 'Sin asignar'),
+        celdaNum(a.abono_recibido || 0),
+        celdaNum(a.valor_arriendo || 0),
+        celdaNumR(a.saldo_pendiente || 0),
+      ]);
+    });
+
+    const totalPendiente = pendientes.reduce((s, a) => s + (a.saldo_pendiente || 0), 0);
+    filas.push(Array(NCOLS).fill(null).map(() => celdaNormal('')));
+    filas.push([
+      celda('TOTAL POR COBRAR', { bold: true, fondo: COLOR.AMBAR_CLARO }),
+      ...Array(NCOLS - 2).fill(null).map(() => celda('', { fondo: COLOR.AMBAR_CLARO })),
+      celda(totalPendiente, { bold: true, fondo: COLOR.AMBAR_CLARO, colorTexto: COLOR.AMBAR, align: 'right' }),
+    ]);
+  }
+
+  const anchos = [20, 14, 13, 14, 17];
+  const ws = buildWS(filas, anchos);
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: NCOLS - 1 } },
+    pendientes.length === 0
+      ? { s: { r: 2, c: 0 }, e: { r: 2, c: NCOLS - 1 } }
+      : { s: { r: filas.length - 1, c: 0 }, e: { r: filas.length - 1, c: NCOLS - 2 } },
+  ];
+  ws['!rows'] = [{ hpt: 28 }];
+  return ws;
+}
+
 // ── Exportar ──────────────────────────────────────────────────────────────────
 
 export async function exportarExcel(mes = null) {
@@ -400,6 +455,7 @@ export async function exportarExcel(mes = null) {
     XLSX.utils.book_append_sheet(wb, construirHojaHabitaciones(datos.habitaciones,   mesFiltro), 'Habitaciones');
     XLSX.utils.book_append_sheet(wb, construirHojaFinanzas(datos.finanzas,           mesFiltro), 'Ingresos y Gastos');
     XLSX.utils.book_append_sheet(wb, construirHojaPagos(datos.pagos,                 mesFiltro), 'Historial de Pagos');
+    XLSX.utils.book_append_sheet(wb, construirHojaPagosPendientes(datos.arrendatarios, mesFiltro), 'Pagos Pendientes');
 
     XLSX.writeFile(wb, `RanchoGrande_${mesFiltro}.xlsx`);
     mostrarToast('✅ Excel descargado correctamente', 'success');
