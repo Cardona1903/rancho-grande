@@ -925,7 +925,10 @@ label {
   align-items: flex-start;
   gap: 2px;
   border-top: 3px solid var(--primary-light);
+  cursor: pointer;
+  transition: box-shadow 0.15s;
 }
+.resumen-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
 .resumen-card-icon { font-size: 20px; margin-bottom: 4px; }
 .resumen-card-valor { font-size: 22px; font-weight: var(--font-weight-bold); color: var(--text-primary); letter-spacing: -0.5px; }
 .resumen-card-valor.ingreso { color: var(--primary); }

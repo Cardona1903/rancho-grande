@@ -147,9 +147,34 @@ function renderAseoHoy(turnoData) {
   }
 }
 
+// ─── Navegación desde los cards de resumen ────────────────────────────────────
+
+const CARD_DESTINO_SCREEN = {
+  'card-habitaciones': 'habitaciones',
+  'card-arrendatarios': 'arrendatarios',
+  'card-ingresos': 'finanzas',
+  'card-gastos': 'finanzas',
+};
+
+let _clicksCardsInicializados = false;
+
+function inicializarClicksCards() {
+  if (_clicksCardsInicializados) return;
+  _clicksCardsInicializados = true;
+
+  document.addEventListener('click', (evento) => {
+    const card = evento.target.closest('.resumen-card');
+    if (!card) return;
+    const screen = CARD_DESTINO_SCREEN[card.id];
+    if (!screen) return;
+    document.querySelector(`.nav-btn[data-screen="${screen}"]`)?.click();
+  });
+}
+
 // ─── Inicialización ───────────────────────────────────────────────────────────
 
 export async function initInicio() {
+  inicializarClicksCards();
   renderSaludo();
 
   // Poner "-" mientras carga
