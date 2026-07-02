@@ -847,7 +847,7 @@ label {
 /* ---------- Finanzas ---------- */
 
 /* NStatCard — Finanzas resumen */
-.finanzas-resumen { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:12px var(--space-md); }
+.finanzas-resumen { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:12px var(--space-md); }
 .resumen-item {
   background: var(--surface);
   border-radius: var(--radius-md);
@@ -860,6 +860,16 @@ label {
 .resumen-valor { display:block; font-size:var(--font-size-md); font-weight:var(--font-weight-bold); letter-spacing:-0.3px; }
 .resumen-valor.ingreso { color:var(--primary); }
 .resumen-valor.gasto   { color:var(--error); }
+.resumen-valor.pendiente { color:var(--warning); }
+
+/* NList — Pagos pendientes */
+.finanzas-pendientes { padding: 0 var(--space-md) 12px; }
+.finanzas-pendientes-titulo { font-size:var(--font-size-sm); font-weight:var(--font-weight-bold); color:var(--text-primary); margin-bottom:8px; }
+.pendiente-card { margin-bottom:8px; }
+.pendiente-header { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.pendiente-nombre { font-size:15px; font-weight:700; color:var(--text-primary); }
+.pendiente-montos { font-size:12px; color:var(--text-secondary); margin-top:4px; }
+.pendiente-saldo { font-size:14px; font-weight:700; color:var(--warning); margin-top:4px; }
 .finanzas-filtros { flex-shrink: 0; background: var(--bg); }
 .finanzas-mes-selector {
   display: flex;

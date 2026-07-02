@@ -66,6 +66,48 @@ async function cargarYRenderFinanzas() {
 
   renderResumen(data || []);
   renderLista(data || []);
+  await cargarPagosPendientes();
+}
+
+async function cargarPagosPendientes() {
+  const cont = document.getElementById('finanzas-pagos-pendientes-lista');
+  if (!cont) return;
+
+  const { data, error } = await supabase
+    .from('arrendatarios')
+    .select('nombre, valor_arriendo, abono_recibido, saldo_pendiente, habitaciones(numero)')
+    .eq('activo', true)
+    .gt('saldo_pendiente', 0)
+    .order('saldo_pendiente', { ascending: false });
+
+  if (error) {
+    console.error('Error al cargar pagos pendientes:', error);
+    cont.innerHTML = '<p class="mensaje-error">Error al cargar pagos pendientes.</p>';
+    return;
+  }
+
+  const lista = data || [];
+  const totalPendiente = lista.reduce((s, a) => s + (a.saldo_pendiente || 0), 0);
+
+  const elPendiente = document.getElementById('resumen-pendiente-cobrar');
+  if (elPendiente) elPendiente.textContent = '$ ' + formatearPrecio(totalPendiente);
+
+  if (lista.length === 0) {
+    cont.innerHTML = '<p class="mensaje-vacio">No hay pagos pendientes 🎉</p>';
+    return;
+  }
+
+  cont.innerHTML = lista.map(a => {
+    const habLabel = a.habitaciones ? `Hab. ${a.habitaciones.numero}` : '';
+    return `<div class="card pendiente-card">
+      <div class="pendiente-header">
+        <span class="pendiente-nombre">${a.nombre}</span>
+        ${habLabel ? `<span class="registro-hab">${habLabel}</span>` : ''}
+      </div>
+      <div class="pendiente-montos">Abono recibido: $ ${formatearPrecio(a.abono_recibido || 0)} / Total: $ ${formatearPrecio(a.valor_arriendo || 0)}</div>
+      <div class="pendiente-saldo">Pendiente: $ ${formatearPrecio(a.saldo_pendiente)}</div>
+    </div>`;
+  }).join('');
 }
 
 function renderResumen(data) {
