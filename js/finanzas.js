@@ -1,6 +1,7 @@
 import supabase from './supabase.js';
 import { getUsuario } from './auth.js';
 import { mostrarToast } from './toast.js';
+import { formatearPrecio, limpiarPrecio, aplicarFormatoMoneda } from './utils.js';
 
 const CATEGORIAS = ['Arriendo', 'Servicios', 'Mantenimiento', 'Fachada', 'Patio', 'General', 'Otro'];
 
@@ -25,10 +26,6 @@ function getPrimerDia(yearMonth) {
 function getUltimoDia(yearMonth) {
   const [year, month] = yearMonth.split('-').map(Number);
   return new Date(year, month, 0).toISOString().split('T')[0];
-}
-
-function formatearPrecio(valor) {
-  return Number(valor).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
 }
 
 function formatearFecha(isoDate) {
@@ -76,11 +73,11 @@ function renderResumen(data) {
   const totalGastos   = data.filter(r => r.tipo === 'gasto').reduce((s, r) => s + r.valor, 0);
   const balance       = totalIngresos - totalGastos;
 
-  document.getElementById('resumen-ingresos').textContent = formatearPrecio(totalIngresos);
-  document.getElementById('resumen-gastos').textContent   = formatearPrecio(totalGastos);
+  document.getElementById('resumen-ingresos').textContent = '$ ' + formatearPrecio(totalIngresos);
+  document.getElementById('resumen-gastos').textContent   = '$ ' + formatearPrecio(totalGastos);
 
   const elBalance = document.getElementById('resumen-balance');
-  elBalance.textContent = formatearPrecio(balance);
+  elBalance.textContent = '$ ' + formatearPrecio(balance);
   elBalance.className   = 'resumen-valor ' + (balance >= 0 ? 'ingreso' : 'gasto');
 }
 
@@ -106,7 +103,7 @@ function renderLista(data) {
     return `<div class="card registro-card" data-id="${r.id}">
       <div class="registro-header">
         <span class="registro-concepto">${r.concepto}</span>
-        <span class="registro-valor ${r.tipo}">${formatearPrecio(r.valor)}</span>
+        <span class="registro-valor ${r.tipo}">$ ${formatearPrecio(r.valor)}</span>
       </div>
       <div class="registro-meta">
         ${badge}
@@ -159,7 +156,7 @@ function buildFormHTML(registro = null) {
     </div>
     <div class="form-group">
       <label class="form-label" for="campo-finanza-valor">Valor</label>
-      <input class="input-field" type="number" id="campo-finanza-valor" min="0" value="${registro?.valor || ''}" placeholder="0" />
+      <input class="input-field" type="text" inputmode="numeric" id="campo-finanza-valor" value="${registro?.valor ? formatearPrecio(registro.valor) : ''}" placeholder="0" />
     </div>
     <div class="form-group">
       <label class="form-label" for="campo-finanza-fecha">Fecha</label>
@@ -209,6 +206,7 @@ function buildFormHTML(registro = null) {
 function abrirFormNuevo() {
   document.getElementById('modal-finanza-titulo').textContent = 'Nuevo registro';
   document.getElementById('form-finanza').innerHTML = buildFormHTML();
+  aplicarFormatoMoneda(document.getElementById('campo-finanza-valor'));
   document.getElementById('modal-finanza-form').style.display = 'flex';
   registroSeleccionadoId = null;
 }
@@ -218,6 +216,7 @@ async function abrirFormEditar(id) {
   if (error) { mostrarToast('Error al cargar registro', true); return; }
   document.getElementById('modal-finanza-titulo').textContent = 'Editar registro';
   document.getElementById('form-finanza').innerHTML = buildFormHTML(data);
+  aplicarFormatoMoneda(document.getElementById('campo-finanza-valor'));
   document.getElementById('modal-finanza-form').style.display = 'flex';
   registroSeleccionadoId = id;
 }
@@ -230,7 +229,7 @@ async function guardarFinanza(e) {
 
   const tipo      = document.querySelector('input[name="tipo-finanza"]:checked')?.value;
   const concepto  = document.getElementById('campo-finanza-concepto')?.value.trim();
-  const valorRaw  = document.getElementById('campo-finanza-valor')?.value;
+  const valor     = limpiarPrecio(document.getElementById('campo-finanza-valor')?.value);
   const fecha     = document.getElementById('campo-finanza-fecha')?.value;
   const categoria = document.getElementById('campo-finanza-categoria')?.value;
   const tieneHab  = document.getElementById('campo-finanza-tiene-hab')?.checked;
@@ -240,14 +239,14 @@ async function guardarFinanza(e) {
 
   if (!tipo)              { mostrarToast('Selecciona el tipo (Ingreso/Gasto)', true); return; }
   if (!concepto)          { mostrarToast('El concepto es obligatorio', true); return; }
-  if (!valorRaw || Number(valorRaw) <= 0) { mostrarToast('Ingresa un valor válido', true); return; }
+  if (!valor || valor <= 0) { mostrarToast('Ingresa un valor válido', true); return; }
   if (!fecha)             { mostrarToast('La fecha es obligatoria', true); return; }
 
   const usuario = getUsuario();
   const payload = {
     tipo,
     concepto,
-    valor: Number(valorRaw),
+    valor,
     fecha,
     categoria: categoria || null,
     habitacion_id: habId || null,

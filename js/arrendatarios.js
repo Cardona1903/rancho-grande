@@ -1,6 +1,7 @@
 import supabase from './supabase.js';
 import { getUsuario } from './auth.js';
 import { mostrarToast } from './toast.js';
+import { formatearPrecio, limpiarPrecio, aplicarFormatoMoneda } from './utils.js';
 
 let listaArrendatarios = [];
 let filtroActual = 'todos';
@@ -98,6 +99,9 @@ export function initArrendatarios() {
     }
   });
 
+  ['campo-arr-valor-arriendo', 'campo-hp-valor-arriendo', 'campo-arr-abono', 'campo-hp-abono', 'campo-pago-valor']
+    .forEach(id => aplicarFormatoMoneda(document.getElementById(id)));
+
   cargarArrendatarios();
 }
 
@@ -135,10 +139,6 @@ function getMesActualString() {
   const y = hoy.getFullYear();
   const m = String(hoy.getMonth() + 1).padStart(2, '0');
   return `${y}-${m}`;
-}
-
-function formatearPrecio(valor) {
-  return `$${Number(valor || 0).toLocaleString('es-CO')}`;
 }
 
 async function cargarArrendatarios() {
@@ -223,8 +223,8 @@ function renderArrendatarios() {
       <div class="arrendatario-habitacion">${habitacionTexto}</div>
       <div class="habitacion-info">${badges[arrendatario.estado_pago] || ''}</div>
       ${vencimientoHtml}
-      ${arrendatario.saldo_pendiente > 0 ? `<div class="arrendatario-debe">Debe: ${formatearPrecio(arrendatario.saldo_pendiente)}</div>` : ''}
-      ${arrendatario.abono_recibido > 0 ? `<div class="arrendatario-abono">Abono: ${formatearPrecio(arrendatario.abono_recibido)}</div>` : ''}
+      ${arrendatario.saldo_pendiente > 0 ? `<div class="arrendatario-debe">Debe: $ ${formatearPrecio(arrendatario.saldo_pendiente)}</div>` : ''}
+      ${arrendatario.abono_recibido > 0 ? `<div class="arrendatario-abono">Abono: $ ${formatearPrecio(arrendatario.abono_recibido)}</div>` : ''}
     `;
 
     card.addEventListener('click', () => abrirOpciones(arrendatario));
@@ -266,7 +266,7 @@ async function llenarSelectHabitaciones(select, habitacionActualId) {
       opcion.value = habitacion.id;
       opcion.dataset.precio = habitacion.precio;
       const prefijo = habitacion.tipo === 'apartamento' ? 'Apto' : 'Hab.';
-      opcion.textContent = `${prefijo} ${habitacion.numero} — ${formatearPrecio(habitacion.precio)}`;
+      opcion.textContent = `${prefijo} ${habitacion.numero} — $ ${formatearPrecio(habitacion.precio)}`;
       if (habitacion.id === habitacionActualId) opcion.selected = true;
       select.appendChild(opcion);
     });
@@ -282,7 +282,7 @@ function autocompletarPrecioHabitacion(select) {
   if (!precio) return;
 
   const targetId = select.id === 'campo-hp-habitacion' ? 'campo-hp-valor-arriendo' : 'campo-arr-valor-arriendo';
-  document.getElementById(targetId).value = precio;
+  document.getElementById(targetId).value = formatearPrecio(precio);
 
   if (select.id === 'campo-hp-habitacion') actualizarSaldoReferenciaInicial();
 }
@@ -301,7 +301,7 @@ function actualizarVisibilidadAbono() {
 }
 
 function actualizarVisibilidadFechaPagoCompleto() {
-  const abono = Number(document.getElementById('campo-arr-abono').value || 0);
+  const abono = limpiarPrecio(document.getElementById('campo-arr-abono').value);
   const grupoFecha = document.getElementById('grupo-arr-fecha-pago-completo');
   if (abono > 0) {
     grupoFecha.classList.remove('campo-oculto');
@@ -434,10 +434,10 @@ function seleccionarPagoInicial(radioOption) {
 }
 
 function actualizarSaldoReferenciaInicial() {
-  const valorArriendo = Number(document.getElementById('campo-hp-valor-arriendo').value || 0);
-  const abono = Number(document.getElementById('campo-hp-abono').value || 0);
+  const valorArriendo = limpiarPrecio(document.getElementById('campo-hp-valor-arriendo').value);
+  const abono = limpiarPrecio(document.getElementById('campo-hp-abono').value);
   const saldo = Math.max(valorArriendo - abono, 0);
-  document.getElementById('hp-saldo-texto').textContent = formatearPrecio(saldo);
+  document.getElementById('hp-saldo-texto').textContent = '$ ' + formatearPrecio(saldo);
 }
 
 async function manejarSubmitHabitacionPago(evento) {
@@ -452,7 +452,7 @@ async function manejarSubmitHabitacionPago(evento) {
     return;
   }
 
-  const valorArriendo = Number(document.getElementById('campo-hp-valor-arriendo').value);
+  const valorArriendo = limpiarPrecio(document.getElementById('campo-hp-valor-arriendo').value);
   if (!valorArriendo || valorArriendo <= 0) {
     mostrarToast('Ingresa un valor de arriendo válido.', true);
     return;
@@ -474,7 +474,7 @@ async function manejarSubmitHabitacionPago(evento) {
       metodoPago,
     });
   } else {
-    const abono = Number(document.getElementById('campo-hp-abono').value || 0);
+    const abono = limpiarPrecio(document.getElementById('campo-hp-abono').value);
     if (abono > valorArriendo) {
       mostrarToast('El abono no puede superar el valor del arriendo.', true);
       return;
@@ -607,7 +607,7 @@ async function guardarHabitacionPago(arrendatario, datos) {
         }
       }
 
-      mostrarToast(`Habitación asignada. Saldo pendiente: ${formatearPrecio(saldo)} ⏳`);
+      mostrarToast(`Habitación asignada. Saldo pendiente: $ ${formatearPrecio(saldo)} ⏳`);
     }
 
     await supabase.from('habitaciones').update({ estado: 'ocupada' }).eq('id', datos.habitacionId);
@@ -635,9 +635,9 @@ async function abrirFormEditar(arrendatario) {
   document.getElementById('campo-arr-telefono').value = arrendatario.telefono || '';
   document.getElementById('campo-arr-fecha-ingreso').value = arrendatario.fecha_ingreso;
   document.getElementById('campo-arr-fecha-vencimiento').value = arrendatario.fecha_vencimiento;
-  document.getElementById('campo-arr-valor-arriendo').value = arrendatario.valor_arriendo;
+  document.getElementById('campo-arr-valor-arriendo').value = formatearPrecio(arrendatario.valor_arriendo);
   document.getElementById('campo-arr-estado-pago').value = arrendatario.estado_pago;
-  document.getElementById('campo-arr-abono').value = arrendatario.abono_recibido || 0;
+  document.getElementById('campo-arr-abono').value = formatearPrecio(arrendatario.abono_recibido || 0);
   document.getElementById('campo-arr-fecha-pago-completo').value = arrendatario.fecha_pago_completo || '';
   document.getElementById('campo-arr-metodo-pago').value = arrendatario.metodo_pago || '';
   document.getElementById('campo-arr-observaciones').value = arrendatario.observaciones || '';
@@ -670,8 +670,8 @@ async function manejarSubmitArrendatario(evento) {
   }
 
   const estadoPago = document.getElementById('campo-arr-estado-pago').value;
-  const valorArriendo = Number(document.getElementById('campo-arr-valor-arriendo').value);
-  let abonoRecibido = estadoPago === 'al_dia' ? 0 : Number(document.getElementById('campo-arr-abono').value || 0);
+  const valorArriendo = limpiarPrecio(document.getElementById('campo-arr-valor-arriendo').value);
+  let abonoRecibido = estadoPago === 'al_dia' ? 0 : limpiarPrecio(document.getElementById('campo-arr-abono').value);
 
   if (abonoRecibido > valorArriendo) {
     mostrarToast('El abono no puede superar el valor del arriendo.', true);
@@ -752,7 +752,7 @@ function seleccionarTipoPago(radioOption) {
     const sugerido = arrendatarioSeleccionado.saldo_pendiente > 0
       ? arrendatarioSeleccionado.saldo_pendiente
       : arrendatarioSeleccionado.valor_arriendo;
-    campoValor.value = sugerido;
+    campoValor.value = formatearPrecio(sugerido);
   } else {
     campoValor.value = '';
   }
@@ -761,8 +761,8 @@ function seleccionarTipoPago(radioOption) {
 function abrirModalPago(arrendatario) {
   document.getElementById('modal-pago-titulo').textContent = `Registrar pago — ${arrendatario.nombre}`;
   document.getElementById('pago-referencia').innerHTML = `
-    <p>Valor arriendo: <strong>${formatearPrecio(arrendatario.valor_arriendo)}</strong></p>
-    <p>Saldo actual: <strong>${formatearPrecio(arrendatario.saldo_pendiente)}</strong></p>
+    <p>Valor arriendo: <strong>$ ${formatearPrecio(arrendatario.valor_arriendo)}</strong></p>
+    <p>Saldo actual: <strong>$ ${formatearPrecio(arrendatario.saldo_pendiente)}</strong></p>
   `;
 
   document.getElementById('form-pago').reset();
@@ -772,7 +772,7 @@ function abrirModalPago(arrendatario) {
   });
 
   const sugerido = arrendatario.saldo_pendiente > 0 ? arrendatario.saldo_pendiente : arrendatario.valor_arriendo;
-  document.getElementById('campo-pago-valor').value = sugerido;
+  document.getElementById('campo-pago-valor').value = formatearPrecio(sugerido);
   document.getElementById('campo-pago-fecha').value = getHoyString();
   document.getElementById('campo-pago-mes').value = getMesActualString();
 
@@ -786,7 +786,7 @@ async function manejarSubmitPago(evento) {
   if (!arrendatario) return;
 
   const tipoPago = document.querySelector('input[name="tipo-pago"]:checked').value;
-  const valor = Number(document.getElementById('campo-pago-valor').value);
+  const valor = limpiarPrecio(document.getElementById('campo-pago-valor').value);
 
   if (!valor || valor <= 0) {
     mostrarToast('Ingresa un valor de pago válido.', true);
@@ -893,7 +893,7 @@ async function registrarPago(arrendatario, datosPago) {
         .eq('id', arrendatario.id);
       if (errorUpdate) throw errorUpdate;
 
-      mostrarToast(`Abono registrado. Resta: ${formatearPrecio(nuevoSaldo)} ⏳`);
+      mostrarToast(`Abono registrado. Resta: $ ${formatearPrecio(nuevoSaldo)} ⏳`);
     }
 
     cerrarModales();

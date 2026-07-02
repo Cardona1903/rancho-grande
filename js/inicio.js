@@ -1,5 +1,6 @@
 import supabase from './supabase.js';
 import { getUsuario } from './auth.js';
+import { formatearPrecio } from './utils.js';
 
 // ─── Utilidades de fecha ──────────────────────────────────────────────────────
 
@@ -28,10 +29,6 @@ function getPrimerDia(yearMonth) {
 function getUltimoDia(yearMonth) {
   const [year, month] = yearMonth.split('-').map(Number);
   return new Date(year, month, 0).toISOString().split('T')[0];
-}
-
-function formatearPrecio(valor) {
-  return Number(valor).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
 }
 
 function diasHastaVencer(fechaISO) {
@@ -127,7 +124,7 @@ function renderUrgentes(arrendatarios) {
       </div>
       <div class="mora-card-footer">
         <span class="mora-debe-label">Debe</span>
-        <span class="mora-debe-valor">${formatearPrecio(a._debe)}</span>
+        <span class="mora-debe-valor">$ ${formatearPrecio(a._debe)}</span>
       </div>
     </div>`;
   }).join('');
@@ -209,13 +206,13 @@ export async function initInicio() {
   // Ingresos del mes
   if (resIngresos.status === 'fulfilled' && !resIngresos.value.error) {
     const total = (resIngresos.value.data || []).reduce((s, r) => s + r.valor, 0);
-    document.getElementById('card-ingresos-val').textContent = formatearPrecio(total);
+    document.getElementById('card-ingresos-val').textContent = '$ ' + formatearPrecio(total);
   }
 
   // Gastos del mes
   if (resGastos.status === 'fulfilled' && !resGastos.value.error) {
     const total = (resGastos.value.data || []).reduce((s, r) => s + r.valor, 0);
-    document.getElementById('card-gastos-val').textContent = formatearPrecio(total);
+    document.getElementById('card-gastos-val').textContent = '$ ' + formatearPrecio(total);
   }
 
   // Urgentes (usa los arrendatarios ya cargados)

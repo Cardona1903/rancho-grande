@@ -1,6 +1,7 @@
 import supabase from './supabase.js';
 import { mostrarNotificacionLocal } from './notificaciones.js';
 import { mostrarToast } from './toast.js';
+import { formatearPrecio, limpiarPrecio, aplicarFormatoMoneda } from './utils.js';
 
 console.log('habitaciones.js cargado');
 
@@ -50,6 +51,8 @@ export function initHabitaciones() {
     }
   });
 
+  aplicarFormatoMoneda(document.getElementById('campo-precio'));
+
   cargarHabitaciones();
 }
 
@@ -88,7 +91,7 @@ function crearCardHabitacion(habitacion) {
       <span class="badge badge-success">${tipoTexto}</span>
       ${estadoBadge}
     </div>
-    <div class="habitacion-precio">${formatearPrecio(habitacion.precio)} / mes</div>
+    <div class="habitacion-precio">$ ${formatearPrecio(habitacion.precio)} / mes</div>
     <div class="habitacion-info">${banoTexto}</div>
     ${habitacion.descripcion ? `<div>${habitacion.descripcion}</div>` : ''}
   `;
@@ -134,10 +137,6 @@ function renderHabitaciones(lista) {
   });
 }
 
-function formatearPrecio(valor) {
-  return `$${Number(valor).toLocaleString('es-CO')}`;
-}
-
 function abrirFormNueva() {
   habitacionEditandoId = null;
   document.getElementById('modal-habitacion-titulo').textContent = 'Nueva habitación';
@@ -151,7 +150,7 @@ function abrirFormEditar(habitacion) {
   document.getElementById('campo-numero').value = habitacion.numero;
   document.getElementById('campo-tipo').value = habitacion.tipo;
   document.getElementById('campo-tiene-bano').checked = habitacion.tiene_bano;
-  document.getElementById('campo-precio').value = habitacion.precio;
+  document.getElementById('campo-precio').value = formatearPrecio(habitacion.precio);
   document.getElementById('campo-descripcion').value = habitacion.descripcion || '';
   mostrarModal('modal-habitacion-form');
 }
@@ -169,7 +168,7 @@ async function manejarSubmitFormulario(evento) {
     numero: document.getElementById('campo-numero').value.trim(),
     tipo: document.getElementById('campo-tipo').value,
     tiene_bano: document.getElementById('campo-tiene-bano').checked,
-    precio: Number(document.getElementById('campo-precio').value),
+    precio: limpiarPrecio(document.getElementById('campo-precio').value),
     descripcion: document.getElementById('campo-descripcion').value.trim() || null,
   };
 
