@@ -671,15 +671,17 @@ label {
 /* Pantallas con zona fija + zona scrolleable */
 #screen-arrendatarios,
 #screen-habitaciones,
-#screen-aseo,
-#screen-finanzas {
+#screen-aseo {
   overflow: hidden;
 }
 
-#finanzas-lista {
-  flex: 1;
+/* Finanzas: el resumen (4 cards) + "Pagos pendientes" puede crecer más
+   alto que el viewport (varios arrendatarios con saldo pendiente), así
+   que en vez de fijar ese bloque y scrollear solo #finanzas-lista, se
+   deja scrollear la pantalla completa para que nada quede inaccesible. */
+#screen-finanzas {
   overflow-y: auto;
-  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .aseo-contenido {
