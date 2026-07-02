@@ -6,9 +6,21 @@ import { formatearPrecio, limpiarPrecio, aplicarFormatoMoneda } from './utils.js
 // ⚠️ REQUISITO MANUAL — foto de cédula (una sola vez, vía dashboard de Supabase):
 // 1) SQL Editor → ejecutar:
 //      ALTER TABLE arrendatarios ADD COLUMN IF NOT EXISTS cedula_foto_url TEXT;
-// 2) Storage → crear un bucket público llamado "cedulas" (la anon key no tiene
-//    permiso para crearlo vía API por RLS, hay que hacerlo desde el dashboard).
-// Sin estos dos pasos, subirFotoCedula() y el guardado de cedula_foto_url fallarán.
+// 2) Storage → bucket "cedulas" PRIVADO (no marcar "Public bucket": son fotos
+//    de identificación, no deben quedar accesibles por URL pública de internet).
+// 3) SQL Editor → como la app solo usa la anon key (no hay sesiones de Supabase
+//    Auth), hay que darle permiso explícito vía RLS sobre storage.objects para
+//    ese bucket. Ejecutar:
+//      CREATE POLICY "cedulas_insert_anon" ON storage.objects FOR INSERT
+//        TO anon WITH CHECK (bucket_id = 'cedulas');
+//      CREATE POLICY "cedulas_update_anon" ON storage.objects FOR UPDATE
+//        TO anon USING (bucket_id = 'cedulas') WITH CHECK (bucket_id = 'cedulas');
+//      CREATE POLICY "cedulas_select_anon" ON storage.objects FOR SELECT
+//        TO anon USING (bucket_id = 'cedulas');
+// Como el bucket es privado, subirFotoCedula() no usa getPublicUrl() (esa URL
+// no funciona en buckets privados) sino createSignedUrl() con vencimiento
+// largo: el archivo solo es accesible con ese token firmado, no adivinando la
+// ruta ni listando el bucket.
 
 let listaArrendatarios = [];
 let filtroActual = 'todos';
@@ -173,6 +185,8 @@ function limpiarFotoCedula(inputId, imgId, previewId) {
   if (preview) preview.style.display = 'none';
 }
 
+const VIGENCIA_URL_CEDULA_SEGUNDOS = 60 * 60 * 24 * 365 * 5; // 5 años
+
 async function subirFotoCedula(file, arrendatarioId) {
   const ext = file.name.split('.').pop() || 'jpg';
   const path = `${arrendatarioId}.${ext}`;
@@ -180,8 +194,14 @@ async function subirFotoCedula(file, arrendatarioId) {
     .from('cedulas')
     .upload(path, file, { upsert: true, contentType: file.type });
   if (error) throw error;
-  const { data } = supabase.storage.from('cedulas').getPublicUrl(path);
-  return data.publicUrl;
+
+  // Bucket privado: no existe URL pública. Se genera una URL firmada de
+  // larga duración para poder guardarla y reutilizarla sin volver a firmar.
+  const { data, error: errorFirma } = await supabase.storage
+    .from('cedulas')
+    .createSignedUrl(path, VIGENCIA_URL_CEDULA_SEGUNDOS);
+  if (errorFirma) throw errorFirma;
+  return data.signedUrl;
 }
 
 async function cargarArrendatarios() {
