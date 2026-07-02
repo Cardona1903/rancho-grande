@@ -30,8 +30,10 @@ export function initHabitaciones() {
     } else if (id === 'btn-cerrar-opciones-habitacion') {
       cerrarModales();
     } else if (id === 'btn-editar-habitacion') {
+      document.getElementById('modal-habitacion-opciones').style.display = 'none';
       if (habitacionSeleccionada) abrirFormEditar(habitacionSeleccionada);
     } else if (id === 'btn-eliminar-habitacion') {
+      document.getElementById('modal-habitacion-opciones').style.display = 'none';
       mostrarModal('modal-habitacion-confirmar');
     } else if (id === 'btn-cancelar-eliminar-habitacion') {
       cerrarModales();
