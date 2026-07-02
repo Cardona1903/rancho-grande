@@ -10,7 +10,7 @@ let arrendatarioSeleccionado = null;
 let habitacionAnteriorEditando = null;
 let _inicializado = false;
 
-export function initArrendatarios() {
+export async function initArrendatarios() {
   if (_inicializado) return;
   _inicializado = true;
   document.addEventListener('click', (evento) => {
@@ -102,6 +102,7 @@ export function initArrendatarios() {
   ['campo-arr-valor-arriendo', 'campo-hp-valor-arriendo', 'campo-arr-abono', 'campo-hp-abono', 'campo-pago-valor']
     .forEach(id => aplicarFormatoMoneda(document.getElementById(id)));
 
+  await sincronizarEstadosHabitaciones();
   cargarArrendatarios();
 }
 
@@ -232,20 +233,49 @@ function renderArrendatarios() {
   });
 }
 
+// Corrige la columna estática habitaciones.estado para que refleje la
+// realidad (arrendatarios activos vinculados), ya que algunas rutas
+// antiguas o ediciones manuales pueden dejarla desincronizada.
+async function sincronizarEstadosHabitaciones() {
+  try {
+    const { data: arrsActivos, error } = await supabase
+      .from('arrendatarios')
+      .select('habitacion_id')
+      .eq('activo', true)
+      .not('habitacion_id', 'is', null);
+    if (error) throw error;
+
+    const idsOcupados = (arrsActivos || []).map(a => a.habitacion_id);
+
+    if (idsOcupados.length > 0) {
+      await supabase.from('habitaciones')
+        .update({ estado: 'disponible' })
+        .not('id', 'in', `(${idsOcupados.join(',')})`);
+      await supabase.from('habitaciones')
+        .update({ estado: 'ocupada' })
+        .in('id', idsOcupados);
+    } else {
+      await supabase.from('habitaciones')
+        .update({ estado: 'disponible' })
+        .not('id', 'is', null);
+    }
+  } catch (error) {
+    console.error('Error al sincronizar estados de habitaciones:', error);
+  }
+}
+
 async function llenarSelectHabitaciones(select, habitacionActualId) {
   select.innerHTML = '<option value="">Cargando...</option>';
 
   try {
-    let query = supabase.from('habitaciones').select('id, numero, tipo, precio, estado');
+    const [habsResult, arrsResult] = await Promise.all([
+      supabase.from('habitaciones').select('id, numero, tipo, precio').order('numero', { ascending: true }),
+      supabase.from('arrendatarios').select('habitacion_id').eq('activo', true).not('habitacion_id', 'is', null),
+    ]);
+    if (habsResult.error) throw habsResult.error;
 
-    if (habitacionActualId) {
-      query = query.or(`estado.eq.disponible,id.eq.${habitacionActualId}`);
-    } else {
-      query = query.eq('estado', 'disponible');
-    }
-
-    const { data, error } = await query.order('numero', { ascending: true });
-    if (error) throw error;
+    const ocupadas = new Set((arrsResult.data || []).map(a => a.habitacion_id));
+    const data = (habsResult.data || []).filter(h => !ocupadas.has(h.id) || h.id === habitacionActualId);
 
     select.innerHTML = '';
 
