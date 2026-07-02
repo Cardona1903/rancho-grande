@@ -103,6 +103,7 @@ export async function initArrendatarios() {
     .forEach(id => aplicarFormatoMoneda(document.getElementById(id)));
 
   await sincronizarEstadosHabitaciones();
+  await sincronizarEstadosPago();
   cargarArrendatarios();
 }
 
@@ -261,6 +262,46 @@ async function sincronizarEstadosHabitaciones() {
     }
   } catch (error) {
     console.error('Error al sincronizar estados de habitaciones:', error);
+  }
+}
+
+// Detecta arrendatarios cuyo ciclo de pago ya venció sin que se haya
+// registrado un abono para el nuevo mes, y los marca pendiente/atrasado
+// con el nuevo saldo. Solo toca registros 'al_dia' con saldo_pendiente
+// en 0, para no pisar abonos parciales ya registrados. No inserta en
+// finanzas — eso solo ocurre cuando el arrendatario efectivamente paga.
+const DIAS_GRACIA_ATRASO = 5;
+
+async function sincronizarEstadosPago() {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  try {
+    const { data: arrendatarios, error } = await supabase
+      .from('arrendatarios')
+      .select('id, estado_pago, saldo_pendiente, fecha_vencimiento, valor_arriendo')
+      .eq('activo', true)
+      .not('fecha_vencimiento', 'is', null);
+    if (error) throw error;
+
+    for (const arr of (arrendatarios || [])) {
+      const vencimiento = new Date(arr.fecha_vencimiento + 'T00:00:00');
+
+      if (vencimiento < hoy && arr.estado_pago === 'al_dia' && arr.saldo_pendiente === 0) {
+        const diasVencido = Math.floor((hoy - vencimiento) / 86400000);
+        const nuevoEstado = diasVencido > DIAS_GRACIA_ATRASO ? 'atrasado' : 'pendiente';
+
+        await supabase.from('arrendatarios')
+          .update({
+            estado_pago: nuevoEstado,
+            saldo_pendiente: arr.valor_arriendo,
+            abono_recibido: 0,
+          })
+          .eq('id', arr.id);
+      }
+    }
+  } catch (error) {
+    console.error('Error al sincronizar estados de pago:', error);
   }
 }
 
