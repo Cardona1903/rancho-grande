@@ -539,7 +539,11 @@
   <div class="modal-overlay" id="modal-aseo-editar" style="display:none">
     <div class="modal">
       <h2 class="modal-titulo">✏️ Editar turnos</h2>
-      <p class="semana-label" id="modal-aseo-semana-label"></p>
+      <div class="finanzas-mes-selector">
+        <button id="btn-semana-anterior-modal" class="mes-nav-btn">◀</button>
+        <span id="label-semana-modal">cargando...</span>
+        <button id="btn-semana-siguiente-modal" class="mes-nav-btn">▶</button>
+      </div>
       <div id="aseo-form-turnos"></div>
       <div class="modal-acciones">
         <button class="btn-primary" id="btn-guardar-turnos">Guardar turnos</button>

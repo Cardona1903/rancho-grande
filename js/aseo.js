@@ -5,6 +5,7 @@ const DIAS_SEMANA = ['lunes','martes','miercoles','jueves','viernes','sabado'];
 const DIAS_LABEL  = ['Lun','Mar','Mié','Jue','Vie','Sáb'];
 
 let semanaActual = '';
+let semanaModalActual = '';
 let arrendatariosSinBano = [];
 let _inicializado = false;
 
@@ -156,19 +157,22 @@ async function cargarYRenderGrid() {
   }
 }
 
-async function abrirModalEditarTurnos() {
-  // Cargar turnos actuales de la semana
+function actualizarLabelSemanaModal() {
+  const el = document.getElementById('label-semana-modal');
+  if (el) el.textContent = getSemanaLabel(semanaModalActual);
+}
+
+async function cargarFormularioTurnosModal() {
+  // Cargar turnos asignados de la semana del modal
   const { data: turnos } = await supabase
     .from('aseo_turnos')
     .select('*')
-    .eq('semana_inicio', semanaActual);
+    .eq('semana_inicio', semanaModalActual);
 
   const turnosPorDia = {};
   (turnos || []).forEach(t => { turnosPorDia[t.dia_semana] = t; });
 
-  // Actualizar label del modal
-  const labelModal = document.getElementById('modal-aseo-semana-label');
-  if (labelModal) labelModal.textContent = getSemanaLabel(semanaActual);
+  actualizarLabelSemanaModal();
 
   // Construir filas del formulario
   const opciones = arrendatariosSinBano.map(a =>
@@ -179,7 +183,7 @@ async function abrirModalEditarTurnos() {
   if (!formTurnos) return;
 
   formTurnos.innerHTML = DIAS_SEMANA.map((dia, i) => {
-    const numDia = getFechaDelDia(semanaActual, i);
+    const numDia = getFechaDelDia(semanaModalActual, i);
     const turno = turnosPorDia[dia];
     return `<div class="turno-fila">
       <span class="turno-dia-label">${DIAS_LABEL[i]} ${numDia}</span>
@@ -198,7 +202,11 @@ async function abrirModalEditarTurnos() {
       if (sel) sel.value = turno.arrendatario_id;
     }
   });
+}
 
+async function abrirModalEditarTurnos() {
+  semanaModalActual = getLunesActual();
+  await cargarFormularioTurnosModal();
   document.getElementById('modal-aseo-editar').style.display = 'flex';
 }
 
@@ -212,7 +220,7 @@ async function guardarTurnos() {
   const { data: turnosActuales } = await supabase
     .from('aseo_turnos')
     .select('*')
-    .eq('semana_inicio', semanaActual);
+    .eq('semana_inicio', semanaModalActual);
   const turnosPorDia = {};
   (turnosActuales || []).forEach(t => { turnosPorDia[t.dia_semana] = t; });
 
@@ -226,7 +234,7 @@ async function guardarTurnos() {
         await supabase.from('aseo_turnos').insert({
           arrendatario_id: nuevoArrendatarioId,
           dia_semana: dia,
-          semana_inicio: semanaActual,
+          semana_inicio: semanaModalActual,
           completado: false
         });
       } else if (turnoActual && nuevoArrendatarioId && turnoActual.arrendatario_id !== nuevoArrendatarioId) {
@@ -237,7 +245,7 @@ async function guardarTurnos() {
     }
     mostrarToast('Turnos guardados ✅');
     document.getElementById('modal-aseo-editar').style.display = 'none';
-    await cargarYRenderGrid();
+    if (semanaModalActual === semanaActual) await cargarYRenderGrid();
   } catch (err) {
     mostrarToast('Error al guardar turnos', true);
     console.error(err);
@@ -272,6 +280,15 @@ export async function initAseo() {
     if (e.target.id === 'btn-guardar-turnos') guardarTurnos();
     if (e.target.id === 'btn-cancelar-turnos') {
       document.getElementById('modal-aseo-editar').style.display = 'none';
+    }
+
+    if (e.target.id === 'btn-semana-anterior-modal') {
+      semanaModalActual = getSemanaAnterior(semanaModalActual);
+      await cargarFormularioTurnosModal();
+    }
+    if (e.target.id === 'btn-semana-siguiente-modal') {
+      semanaModalActual = getSemanaSiguiente(semanaModalActual);
+      await cargarFormularioTurnosModal();
     }
 
     const celda = e.target.closest('.aseo-celda[data-turno-id]');
