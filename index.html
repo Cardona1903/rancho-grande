@@ -185,7 +185,17 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="campo-datos-cedula">Cédula</label>
-          <input class="input-field" type="text" id="campo-datos-cedula" />
+          <input class="input-field" type="text" id="campo-datos-cedula" inputmode="numeric" placeholder="Ej: 1234567890" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Foto de la cédula</label>
+          <div id="datos-cedula-foto-preview" style="display:none; margin-bottom:8px;">
+            <img id="datos-cedula-foto-img" style="max-width:100%; border-radius:8px;" />
+          </div>
+          <label class="btn-secondary" style="cursor:pointer; display:block; text-align:center;">
+            📷 Tomar / seleccionar foto
+            <input type="file" id="campo-datos-cedula-foto" accept="image/*" capture="environment" style="display:none;" />
+          </label>
         </div>
         <div class="form-group">
           <label class="form-label" for="campo-datos-telefono">Teléfono</label>
@@ -275,7 +285,17 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="campo-arr-cedula">Cédula</label>
-          <input class="input-field" type="text" id="campo-arr-cedula" />
+          <input class="input-field" type="text" id="campo-arr-cedula" inputmode="numeric" placeholder="Ej: 1234567890" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Foto de la cédula</label>
+          <div id="cedula-foto-preview" style="display:none; margin-bottom:8px;">
+            <img id="cedula-foto-img" style="max-width:100%; border-radius:8px;" />
+          </div>
+          <label class="btn-secondary" style="cursor:pointer; display:block; text-align:center;">
+            📷 Tomar / seleccionar foto
+            <input type="file" id="campo-arr-cedula-foto" accept="image/*" capture="environment" style="display:none;" />
+          </label>
         </div>
         <div class="form-group">
           <label class="form-label" for="campo-arr-telefono">Teléfono</label>

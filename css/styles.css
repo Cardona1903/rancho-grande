@@ -761,6 +761,15 @@ label {
   color: var(--warning);
 }
 
+.arrendatario-cedula-link {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-top: 6px;
+  text-decoration: none;
+}
+
 /* ---------- Radio group (tipo de pago) ---------- */
 
 .radio-group {

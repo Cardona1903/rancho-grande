@@ -3,6 +3,13 @@ import { getUsuario } from './auth.js';
 import { mostrarToast } from './toast.js';
 import { formatearPrecio, limpiarPrecio, aplicarFormatoMoneda } from './utils.js';
 
+// ⚠️ REQUISITO MANUAL — foto de cédula (una sola vez, vía dashboard de Supabase):
+// 1) SQL Editor → ejecutar:
+//      ALTER TABLE arrendatarios ADD COLUMN IF NOT EXISTS cedula_foto_url TEXT;
+// 2) Storage → crear un bucket público llamado "cedulas" (la anon key no tiene
+//    permiso para crearlo vía API por RLS, hay que hacerlo desde el dashboard).
+// Sin estos dos pasos, subirFotoCedula() y el guardado de cedula_foto_url fallarán.
+
 let listaArrendatarios = [];
 let filtroActual = 'todos';
 let arrendatarioEditandoId = null;
@@ -88,6 +95,10 @@ export async function initArrendatarios() {
       autocompletarPrecioHabitacion(evento.target);
     } else if (evento.target.id === 'campo-arr-estado-pago') {
       actualizarVisibilidadAbono();
+    } else if (evento.target.id === 'campo-arr-cedula-foto') {
+      previsualizarCedulaFoto(evento.target, 'cedula-foto-img', 'cedula-foto-preview');
+    } else if (evento.target.id === 'campo-datos-cedula-foto') {
+      previsualizarCedulaFoto(evento.target, 'datos-cedula-foto-img', 'datos-cedula-foto-preview');
     }
   });
 
@@ -143,6 +154,36 @@ function getMesActualString() {
   return `${y}-${m}`;
 }
 
+// ─── Foto de cédula ────────────────────────────────────────────────────────────
+
+function previsualizarCedulaFoto(input, imgId, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  document.getElementById(imgId).src = url;
+  document.getElementById(previewId).style.display = 'block';
+}
+
+function limpiarFotoCedula(inputId, imgId, previewId) {
+  const input = document.getElementById(inputId);
+  const img = document.getElementById(imgId);
+  const preview = document.getElementById(previewId);
+  if (input) input.value = '';
+  if (img) img.src = '';
+  if (preview) preview.style.display = 'none';
+}
+
+async function subirFotoCedula(file, arrendatarioId) {
+  const ext = file.name.split('.').pop() || 'jpg';
+  const path = `${arrendatarioId}.${ext}`;
+  const { error } = await supabase.storage
+    .from('cedulas')
+    .upload(path, file, { upsert: true, contentType: file.type });
+  if (error) throw error;
+  const { data } = supabase.storage.from('cedulas').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 async function cargarArrendatarios() {
   const contenedor = document.getElementById('arrendatarios-lista');
   contenedor.innerHTML = '<p class="loading-text">Cargando arrendatarios...</p>';
@@ -196,8 +237,12 @@ function renderArrendatarios() {
       card.innerHTML = `
         <div class="arrendatario-nombre">${arrendatario.nombre}</div>
         <div class="arrendatario-habitacion">🏠 Sin habitación asignada — toca para completar</div>
+        ${arrendatario.cedula_foto_url ? `<a href="${arrendatario.cedula_foto_url}" target="_blank" rel="noopener" class="arrendatario-cedula-link">Ver cédula 🪪</a>` : ''}
       `;
-      card.addEventListener('click', () => abrirOpciones(arrendatario));
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('a')) return;
+        abrirOpciones(arrendatario);
+      });
       contenedor.appendChild(card);
       return;
     }
@@ -227,9 +272,13 @@ function renderArrendatarios() {
       ${vencimientoHtml}
       ${arrendatario.saldo_pendiente > 0 ? `<div class="arrendatario-debe">Debe: $ ${formatearPrecio(arrendatario.saldo_pendiente)}</div>` : ''}
       ${arrendatario.abono_recibido > 0 ? `<div class="arrendatario-abono">Abono: $ ${formatearPrecio(arrendatario.abono_recibido)}</div>` : ''}
+      ${arrendatario.cedula_foto_url ? `<a href="${arrendatario.cedula_foto_url}" target="_blank" rel="noopener" class="arrendatario-cedula-link">Ver cédula 🪪</a>` : ''}
     `;
 
-    card.addEventListener('click', () => abrirOpciones(arrendatario));
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
+      abrirOpciones(arrendatario);
+    });
     contenedor.appendChild(card);
   });
 }
@@ -388,6 +437,7 @@ function actualizarVisibilidadFechaPagoCompleto() {
 function abrirFormDatosNuevo() {
   document.getElementById('form-arrendatario-datos').reset();
   document.getElementById('campo-datos-fecha-ingreso').value = getHoyString();
+  limpiarFotoCedula('campo-datos-cedula-foto', 'datos-cedula-foto-img', 'datos-cedula-foto-preview');
   mostrarModal('modal-arrendatario-datos');
 }
 
@@ -430,6 +480,18 @@ async function crearArrendatarioBase(datos) {
 
     const { data, error } = await supabase.from('arrendatarios').insert(datos).select().single();
     if (error) throw error;
+
+    const fileInput = document.getElementById('campo-datos-cedula-foto');
+    if (fileInput?.files[0]) {
+      try {
+        const url = await subirFotoCedula(fileInput.files[0], data.id);
+        await supabase.from('arrendatarios').update({ cedula_foto_url: url }).eq('id', data.id);
+        data.cedula_foto_url = url;
+      } catch (errFoto) {
+        console.error('Error al subir foto de cédula:', errFoto);
+        mostrarToast('Arrendatario guardado, pero no se pudo subir la foto de la cédula.', true);
+      }
+    }
 
     cerrarModales();
     mostrarToast('Datos guardados. Ahora asigna su habitación.');
@@ -713,6 +775,12 @@ async function abrirFormEditar(arrendatario) {
   document.getElementById('campo-arr-metodo-pago').value = arrendatario.metodo_pago || '';
   document.getElementById('campo-arr-observaciones').value = arrendatario.observaciones || '';
 
+  limpiarFotoCedula('campo-arr-cedula-foto', 'cedula-foto-img', 'cedula-foto-preview');
+  if (arrendatario.cedula_foto_url) {
+    document.getElementById('cedula-foto-img').src = arrendatario.cedula_foto_url;
+    document.getElementById('cedula-foto-preview').style.display = 'block';
+  }
+
   await llenarSelectHabitaciones(document.getElementById('campo-arr-habitacion'), arrendatario.habitacion_id);
   actualizarVisibilidadAbono();
   mostrarModal('modal-arrendatario-form');
@@ -778,6 +846,16 @@ async function actualizarArrendatario(datos) {
   btnGuardar.textContent = 'Guardando...';
 
   try {
+    const fileInput = document.getElementById('campo-arr-cedula-foto');
+    if (fileInput?.files[0]) {
+      try {
+        datos.cedula_foto_url = await subirFotoCedula(fileInput.files[0], arrendatarioEditandoId);
+      } catch (errFoto) {
+        console.error('Error al subir foto de cédula:', errFoto);
+        mostrarToast('No se pudo subir la foto de la cédula, se guardarán los demás datos.', true);
+      }
+    }
+
     const { error } = await supabase
       .from('arrendatarios')
       .update(datos)
@@ -1021,6 +1099,8 @@ function cerrarModales() {
   arrendatarioEditandoId = null;
   arrendatarioSeleccionado = null;
   habitacionAnteriorEditando = null;
+  limpiarFotoCedula('campo-arr-cedula-foto', 'cedula-foto-img', 'cedula-foto-preview');
+  limpiarFotoCedula('campo-datos-cedula-foto', 'datos-cedula-foto-img', 'datos-cedula-foto-preview');
 }
 
 export { cargarArrendatarios as recargarArrendatarios };
