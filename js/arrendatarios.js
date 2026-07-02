@@ -2,6 +2,7 @@ import supabase from './supabase.js';
 import { getUsuario } from './auth.js';
 import { mostrarToast } from './toast.js';
 import { formatearPrecio, limpiarPrecio, aplicarFormatoMoneda } from './utils.js';
+import { notificarCambio } from './notificaciones.js';
 
 // ⚠️ REQUISITO MANUAL — foto de cédula (una sola vez, vía dashboard de Supabase):
 // 1) SQL Editor → ejecutar:
@@ -513,6 +514,8 @@ async function crearArrendatarioBase(datos) {
       }
     }
 
+    notificarCambio('👥 Arrendatario', `${getUsuario()?.nombre} registró un nuevo arrendatario`);
+
     cerrarModales();
     mostrarToast('Datos guardados. Ahora asigna su habitación.');
     await abrirHabitacionPago(data);
@@ -1011,6 +1014,8 @@ async function registrarPago(arrendatario, datosPago) {
 
     const { error: errorPago } = await supabase.from('pagos').insert(registroPago);
     if (errorPago) throw errorPago;
+
+    notificarCambio('💰 Pago', `${getUsuario()?.nombre} registró un pago`);
 
     // Sincronizar ingreso en finanzas (no cancela el pago si falla)
     try {

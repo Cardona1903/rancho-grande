@@ -1,7 +1,8 @@
 import supabase from './supabase.js';
-import { mostrarNotificacionLocal } from './notificaciones.js';
+import { mostrarNotificacionLocal, notificarCambio } from './notificaciones.js';
 import { mostrarToast } from './toast.js';
 import { formatearPrecio, limpiarPrecio, aplicarFormatoMoneda } from './utils.js';
+import { getUsuario } from './auth.js';
 
 console.log('habitaciones.js cargado');
 
@@ -203,6 +204,8 @@ async function guardarHabitacion(datos) {
       mostrarToast('Habitación agregada correctamente.');
       mostrarNotificacionLocal('Nueva habitación', `${datos.numero} fue agregada.`);
     }
+
+    notificarCambio('🏠 Habitación', `${getUsuario()?.nombre} registró cambios en habitaciones`);
 
     cerrarModales();
     await cargarHabitaciones();

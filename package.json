@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "sharp": "^0.35.2"
+  },
+  "devDependencies": {
+    "web-push": "^3.6.7"
   }
 }

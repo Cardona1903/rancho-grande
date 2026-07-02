@@ -2,6 +2,7 @@ import supabase from './supabase.js';
 import { getUsuario } from './auth.js';
 import { mostrarToast } from './toast.js';
 import { formatearPrecio, limpiarPrecio, aplicarFormatoMoneda } from './utils.js';
+import { notificarCambio } from './notificaciones.js';
 
 const CATEGORIAS = ['Arriendo', 'Servicios', 'Mantenimiento', 'Fachada', 'Patio', 'General', 'Otro'];
 
@@ -305,6 +306,8 @@ async function guardarFinanza(e) {
       const { error } = await supabase.from('finanzas').insert(payload);
       if (error) throw error;
     }
+    notificarCambio('📊 Finanzas', `${getUsuario()?.nombre} registró un movimiento`);
+
     mostrarToast('Registro guardado ✅');
     document.getElementById('modal-finanza-form').style.display = 'none';
     registroSeleccionadoId = null;

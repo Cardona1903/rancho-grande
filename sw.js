@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranchgrande-v4';
+const CACHE_NAME = 'ranchgrande-v5';
 
 const RECURSOS_ESTATICOS = [
   '/',
@@ -52,4 +52,21 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => caches.match(event.request))
   );
+});
+
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() || {};
+  event.waitUntil(
+    self.registration.showNotification(data.titulo || 'Rancho Grande', {
+      body: data.cuerpo || 'Nuevo registro en la app',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      tag: 'rg-push'
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow('/'));
 });

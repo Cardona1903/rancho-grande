@@ -1,6 +1,6 @@
 import { USUARIOS, CODIGO_ACCESO, getUsuario, setUsuario, cerrarSesion } from './auth.js';
 import { actualizarBannerOffline, sincronizarPendientes } from './offline.js';
-import { initRealtime, detenerRealtime, generarMensajeRealtime, solicitarPermisoNotificaciones } from './notificaciones.js';
+import { initRealtime, detenerRealtime, generarMensajeRealtime, solicitarPermisoNotificaciones, suscribirPush } from './notificaciones.js';
 import supabase from './supabase.js';
 import { initHabitaciones, recargarHabitaciones } from './habitaciones.js';
 import { initArrendatarios, recargarArrendatarios } from './arrendatarios.js';
@@ -185,6 +185,7 @@ function iniciarSesionUI() {
     mostrarScreen('inicio');
     mostrarNavBar(true);
     renderConfiguracion();
+    suscribirPush();
   } else {
     pararRealtime();
     mostrarScreen('login');

@@ -80,3 +80,50 @@ export function mostrarNotificacionLocal(titulo, cuerpo) {
     .then(reg => reg.showNotification(titulo, { body: cuerpo, icon: 'icons/icon-192.png' }))
     .catch(() => {});
 }
+
+// ─── Web Push (background, app cerrada) ───────────────────────────────────────
+
+const VAPID_PUBLIC_KEY = 'BC1gXNv3b4Rh0PGgBmtJexMIkTtt01KexywhYM1gVev5nmaDSj5EhbY4WPl_MSIC9tDwAq4_3uTIroTcFJxKaj8';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+export async function suscribirPush() {
+  if (!('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    const json = sub.toJSON();
+    const supabaseModule = await import('./supabase.js');
+    await supabaseModule.default
+      .from('push_subscriptions')
+      .upsert({
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth,
+        usuario_id: localStorage.getItem('ranchgrande_usuario')
+      }, { onConflict: 'endpoint' });
+  } catch (e) {
+    console.warn('Push subscription failed:', e);
+  }
+}
+
+export async function notificarCambio(titulo, cuerpo) {
+  try {
+    await fetch('/api/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titulo, cuerpo })
+    });
+  } catch (e) { /* silencioso */ }
+}
