@@ -1,4 +1,4 @@
-import { USUARIOS, getUsuario, setUsuario, cerrarSesion } from './auth.js';
+import { USUARIOS, CODIGO_ACCESO, getUsuario, setUsuario, cerrarSesion } from './auth.js';
 import { actualizarBannerOffline, sincronizarPendientes } from './offline.js';
 import { initRealtime, detenerRealtime, generarMensajeRealtime, solicitarPermisoNotificaciones } from './notificaciones.js';
 import supabase from './supabase.js';
@@ -12,6 +12,7 @@ import { mostrarToast } from './toast.js';
 export { mostrarToast };
 
 let realtimeActivo = false;
+let usuarioPendienteId = null;
 
 // ─── Botón X en todos los modales ────────────────────────────────────────────
 
@@ -128,12 +129,45 @@ function renderLogin() {
     card.className = 'login-usuario-card';
     card.dataset.usuarioId = usuario.id;
     card.innerHTML = `<span class="login-usuario-avatar">👤</span><span>${usuario.nombre}</span>`;
-    card.addEventListener('click', () => {
-      setUsuario(usuario.id);
-      iniciarSesionUI();
-    });
+    card.addEventListener('click', () => abrirModalCodigoAcceso(usuario.id));
     contenedor.appendChild(card);
   });
+}
+
+// ─── Código de acceso ─────────────────────────────────────────────────────────
+
+function abrirModalCodigoAcceso(usuarioId) {
+  usuarioPendienteId = usuarioId;
+  const input = document.getElementById('input-codigo-acceso');
+  const error = document.getElementById('codigo-error');
+  if (input) input.value = '';
+  if (error) error.style.display = 'none';
+  const modal = document.getElementById('modal-codigo-acceso');
+  if (modal) modal.style.display = 'flex';
+  input?.focus();
+}
+
+function cerrarModalCodigoAcceso() {
+  usuarioPendienteId = null;
+  const modal = document.getElementById('modal-codigo-acceso');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmarCodigoAcceso() {
+  if (!usuarioPendienteId) return;
+  const input = document.getElementById('input-codigo-acceso');
+  const error = document.getElementById('codigo-error');
+  if (!input) return;
+
+  if (input.value === CODIGO_ACCESO) {
+    setUsuario(usuarioPendienteId);
+    cerrarModalCodigoAcceso();
+    iniciarSesionUI();
+  } else {
+    if (error) error.style.display = 'block';
+    input.value = '';
+    input.focus();
+  }
 }
 
 function renderConfiguracion() {
@@ -178,6 +212,16 @@ function inicializarConfiguracion() {
     }
     if (e.target.id === 'btn-exportar-excel') {
       abrirModalExportar();
+    }
+    if (e.target.id === 'btn-cancelar-codigo') {
+      cerrarModalCodigoAcceso();
+    }
+  });
+
+  document.addEventListener('submit', (e) => {
+    if (e.target.id === 'form-codigo-acceso') {
+      e.preventDefault();
+      confirmarCodigoAcceso();
     }
   });
 }

@@ -26,6 +26,23 @@
     </div>
   </div>
 
+  <!-- Modal: código de acceso -->
+  <div class="modal-overlay" id="modal-codigo-acceso" style="display:none">
+    <div class="modal">
+      <h2 class="modal-titulo">Ingresa el código de acceso</h2>
+      <form id="form-codigo-acceso">
+        <div class="form-group">
+          <input class="input-field" type="password" id="input-codigo-acceso" inputmode="numeric" placeholder="Código de acceso" autocomplete="off" />
+        </div>
+        <p id="codigo-error" style="color:red; display:none">Código incorrecto</p>
+        <div class="modal-acciones">
+          <button type="submit" class="btn-primary" id="btn-confirmar-codigo">Entrar</button>
+          <button type="button" class="btn-secondary" id="btn-cancelar-codigo">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- PANTALLA: INICIO -->
   <div class="screen" id="screen-inicio">
     <div class="inicio-header">

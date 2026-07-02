@@ -1,5 +1,7 @@
 const STORAGE_KEY = 'ranchgrande_usuario';
 
+export const CODIGO_ACCESO = '071019910170';
+
 export const USUARIOS = [
   { id: 'sandro', nombre: 'Sandro Cuellar' },
   { id: 'elvira', nombre: 'Elvira Silva' },
