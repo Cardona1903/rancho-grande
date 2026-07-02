@@ -61,27 +61,29 @@ async function cargarHabitaciones() {
   contenedor.innerHTML = '<p class="loading-text">Cargando habitaciones...</p>';
 
   try {
-    const { data, error } = await supabase
-      .from('habitaciones')
-      .select('*')
-      .order('numero', { ascending: true });
+    const [habsResult, arrsResult] = await Promise.all([
+      supabase.from('habitaciones').select('*').order('numero', { ascending: true }),
+      supabase.from('arrendatarios').select('habitacion_id').eq('activo', true).not('habitacion_id', 'is', null),
+    ]);
 
-    if (error) throw error;
+    if (habsResult.error) throw habsResult.error;
 
-    renderHabitaciones(data || []);
+    const habitacionesOcupadas = new Set((arrsResult.data || []).map(a => a.habitacion_id));
+
+    renderHabitaciones(habsResult.data || [], habitacionesOcupadas);
   } catch (error) {
     console.error('Error al cargar habitaciones:', error);
     contenedor.innerHTML = '<p class="mensaje-error">Error al cargar habitaciones. Verifica tu conexión.</p>';
   }
 }
 
-function crearCardHabitacion(habitacion) {
+function crearCardHabitacion(habitacion, ocupada) {
   const card = document.createElement('div');
   card.className = 'card habitacion-card';
 
   const tipoTexto  = habitacion.tipo === 'apartamento' ? 'Apartamento' : 'Habitación';
   const banoTexto  = habitacion.tiene_bano ? '🚿 Baño privado' : '🚻 Baño compartido';
-  const estadoBadge = habitacion.estado === 'ocupada'
+  const estadoBadge = ocupada
     ? '<span class="badge badge-warning">Ocupada</span>'
     : '<span class="badge badge-success">Disponible</span>';
 
@@ -100,7 +102,7 @@ function crearCardHabitacion(habitacion) {
   return card;
 }
 
-function renderHabitaciones(lista) {
+function renderHabitaciones(lista, habitacionesOcupadas) {
   const contenedor = document.getElementById('habitaciones-lista');
   contenedor.innerHTML = '';
 
@@ -109,8 +111,8 @@ function renderHabitaciones(lista) {
     return;
   }
 
-  const disponibles = lista.filter(h => h.estado === 'disponible');
-  const ocupadas    = lista.filter(h => h.estado === 'ocupada');
+  const disponibles = lista.filter(h => !habitacionesOcupadas.has(h.id));
+  const ocupadas    = lista.filter(h => habitacionesOcupadas.has(h.id));
 
   [
     { titulo: 'Disponibles', items: disponibles, gridId: 'grid-disponibles', tituloClass: '' },
@@ -130,7 +132,7 @@ function renderHabitaciones(lista) {
     if (items.length === 0) {
       grid.innerHTML = `<p class="hab-seccion-vacio">No hay habitaciones ${titulo.toLowerCase()}</p>`;
     } else {
-      items.forEach(h => grid.appendChild(crearCardHabitacion(h)));
+      items.forEach(h => grid.appendChild(crearCardHabitacion(h, habitacionesOcupadas.has(h.id))));
     }
 
     contenedor.appendChild(seccion);
