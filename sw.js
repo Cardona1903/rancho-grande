@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranchgrande-v5';
+const CACHE_NAME = 'ranchgrande-v6';
 
 const RECURSOS_ESTATICOS = [
   '/',
