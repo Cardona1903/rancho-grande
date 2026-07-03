@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Fondo cuadrado redondeado -->
+  <rect width="200" height="200" rx="36" fill="#2D6A4F"/>
+  <!-- Techo (triángulo) -->
+  <polygon points="100,30 170,95 30,95" fill="#ffffff"/>
+  <!-- Cuerpo de la casa -->
+  <rect x="34" y="93" width="132" height="88" rx="0" fill="#ffffff"/>
+  <!-- Puerta (rectángulo verde para mostrar negativo) -->
+  <rect x="72" y="123" width="56" height="58" rx="6" fill="#2D6A4F"/>
+  <!-- Texto RG dentro de la casa, encima de la puerta -->
+  <text x="100" y="117"
+    text-anchor="middle"
+    font-family="Arial Black, Arial, sans-serif"
+    font-weight="900"
+    font-size="38"
+    fill="#2D6A4F">RG</text>
+</svg>
